@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Secrets — NEVER commit these
+.env
+*.key
+*.pem
+credentials.json
+secrets.*
+
+# Generated data (regenerate with generate.py — keeps repo small & deterministic)
+# Comment these out if you WANT the CSVs in the repo for judges to inspect:
+# 01_data_generator/*.csv
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node (for frontend if built out)
+node_modules/
+dist/
+build/

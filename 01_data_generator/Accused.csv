@@ -1,0 +1,634 @@
+AccusedMasterID,CaseMasterID,AccusedName,AgeYear,GenderID,PersonID
+1,1,Ramesh Gowda,45,1,A1
+2,2,Suresh Naik,33,1,A1
+3,3,ಮಂಜುನಾಥ್,37,1,A1
+4,4,Ramesh Gowda,45,1,A1
+5,5,Suresh Naik,33,1,A1
+6,6,ಮಂಜುನಾಥ್,37,1,A1
+7,7,Ramesh Gowda,45,1,A1
+8,8,Suresh Naik,33,1,A1
+9,9,ಮಂಜುನಾಥ್,37,1,A1
+10,10,Ramesh Gowda,45,1,A1
+11,11,Suresh Naik,33,1,A1
+12,12,ಮಂಜುನಾಥ್,37,1,A1
+13,13,Ramesh Gowda,45,1,A1
+14,14,Suresh Naik,33,1,A1
+15,15,Prakash Reddy,31,1,A1
+16,16,Prakash Reddy,31,1,A1
+17,17,ರಾಮಯ್ಯ.ಕೆ,34,1,A1
+18,18,Ramaiah K,34,1,A1
+19,19,ರಾಮು,34,1,A1
+20,20,Ramesh,34,1,A1
+21,21,Ramesh,34,1,A1
+22,22,Ramesh,34,1,A1
+23,23,Ramesh,34,1,A1
+24,24,Ramesh,34,1,A1
+25,25,Ramesh,34,1,A1
+26,26,Manjunath Gowda,41,1,A1
+27,27,Manjunatha Gowda,42,1,A1
+28,28,Suresh Kumar,35,1,A1
+29,29,Suresh Kumara,36,1,A1
+30,30,Ramesh Naik,29,1,A1
+31,31,Ramesh Naika,30,1,A1
+32,32,Prakash B,47,1,A1
+33,33,Prakash Bhat,48,1,A1
+34,34,Nagaraj R,52,1,A1
+35,35,Nagaraja R,53,1,A1
+36,36,Manjunath Patil,21,1,A1
+37,37,Manjunath Murthy,25,1,A1
+38,38,Kiran Gowda,53,1,A1
+39,39,ಮಂಜುನಾಥ್,56,1,A1
+40,39,Ravi Achar,46,1,A2
+41,40,Kiran Hegde,60,1,A1
+42,41,Ravi Hegde,23,1,A1
+43,42,Basavaraj Gouda,58,1,A1
+44,43,Praveen Patil,48,1,A1
+45,44,Kiran Patil,27,1,A1
+46,45,ಶಿವಕುಮಾರ್,31,1,A1
+47,46,Vinod Shetty,20,1,A1
+48,46,Ravi Gowda,57,1,A2
+49,47,Harish Achar,52,1,A1
+50,48,Kiran Patil,55,1,A1
+51,49,Suresh Murthy,54,1,A1
+52,50,Anand Shetty,33,1,A1
+53,51,ಸುರೇಶ್,46,1,A1
+54,52,ರಮೇಶ್,38,1,A1
+55,53,Prakash Reddy,40,1,A1
+56,53,Kiran Bhat,41,1,A2
+57,54,Nagaraj Naik,39,1,A1
+58,55,ಶಿವಕುಮಾರ್,50,1,A1
+59,55,Girish Bhat,35,1,A2
+60,56,Girish Rao,25,1,A1
+61,57,Girish Kumar,19,1,A1
+62,57,Prakash Gouda,50,1,A2
+63,58,Nagaraj Kumar,30,1,A1
+64,59,Suresh Gouda,42,1,A1
+65,59,Ravi Kumar,46,1,A2
+66,60,Manjunath Naik,39,1,A1
+67,61,Anand Kumar,59,1,A1
+68,62,Ravi Patil,33,1,A1
+69,63,Girish Shetty,46,1,A1
+70,63,ಶಿವಕುಮಾರ್,55,1,A2
+71,64,Naveen Reddy,60,1,A1
+72,64,ಸುರೇಶ್,36,1,A2
+73,65,ನಾಗರಾಜ್,45,1,A1
+74,66,Suresh Rao,60,1,A1
+75,66,Manjunath Gowda,49,1,A2
+76,67,Mahesh Shetty,44,1,A1
+77,68,Santosh Patil,24,1,A1
+78,68,Ravi Murthy,26,1,A2
+79,69,Kiran Reddy,34,1,A1
+80,69,Santosh Hegde,40,1,A2
+81,70,Nagaraj Gowda,31,1,A1
+82,71,ಮಂಜುನಾಥ್,59,1,A1
+83,72,Girish Hegde,48,1,A1
+84,73,ಮಹೇಶ್,24,1,A1
+85,74,Anand Patil,40,1,A1
+86,74,Umesh Gowda,42,1,A2
+87,75,Umesh Patil,59,1,A1
+88,76,ರಮೇಶ್,43,1,A1
+89,77,Naveen Patil,31,1,A1
+90,78,Basavaraj Bhat,51,1,A1
+91,78,Manjunath Naik,38,1,A2
+92,79,ಪ್ರಕಾಶ್,19,1,A1
+93,79,Nagaraj Hegde,28,1,A2
+94,80,ನಾಗರಾಜ್,22,1,A1
+95,81,ನಾಗರಾಜ್,57,1,A1
+96,81,Basavaraj Gowda,27,1,A2
+97,82,Shivakumar Bhat,50,1,A1
+98,82,Mahesh Patil,50,1,A2
+99,83,Manjunath Murthy,57,1,A1
+100,84,Umesh Achar,42,1,A1
+101,85,ಸುರೇಶ್,22,1,A1
+102,85,ನಾಗರಾಜ್,40,1,A2
+103,86,Vinod Naik,23,1,A1
+104,87,Kiran Gowda,42,1,A1
+105,88,Naveen Patil,59,1,A1
+106,88,Praveen Gowda,21,1,A2
+107,89,Umesh Achar,31,1,A1
+108,90,ಶಿವಕುಮಾರ್,33,1,A1
+109,91,Anand Hegde,37,1,A1
+110,92,Shivakumar Bhat,25,1,A1
+111,92,Mahesh Hegde,55,1,A2
+112,93,Ravi Gowda,57,1,A1
+113,93,Girish Naik,60,1,A2
+114,94,Harish Gouda,27,1,A1
+115,95,ನಾಗರಾಜ್,25,1,A1
+116,95,ನಾಗರಾಜ್,34,1,A2
+117,96,ಶಿವಕುಮಾರ್,30,1,A1
+118,97,ರಮೇಶ್,44,1,A1
+119,98,Girish Achar,20,1,A1
+120,99,Shivakumar Murthy,23,1,A1
+121,99,Vinod Kumar,36,1,A2
+122,100,Naveen Gowda,60,1,A1
+123,101,Kiran Achar,45,1,A1
+124,102,Vinod Bhat,24,1,A1
+125,102,Harish Naik,60,1,A2
+126,103,Kiran Gowda,33,1,A1
+127,103,ನಾಗರಾಜ್,55,1,A2
+128,104,ಮಹೇಶ್,54,1,A1
+129,105,Kiran Gouda,49,1,A1
+130,106,Basavaraj Naik,46,1,A1
+131,107,Vinod Naik,32,1,A1
+132,107,ಪ್ರಕಾಶ್,27,1,A2
+133,108,Girish Gowda,36,1,A1
+134,109,Vinod Gowda,44,1,A1
+135,109,Mahesh Gouda,41,1,A2
+136,110,Santosh Gowda,38,1,A1
+137,111,Prakash Bhat,41,1,A1
+138,111,ಮಹೇಶ್,44,1,A2
+139,112,Kiran Naik,58,1,A1
+140,112,ಪ್ರಕಾಶ್,49,1,A2
+141,113,Girish Patil,42,1,A1
+142,114,Prakash Achar,20,1,A1
+143,115,ಪ್ರಕಾಶ್,22,1,A1
+144,115,Suresh Achar,31,1,A2
+145,116,Mahesh Rao,59,1,A1
+146,117,Nagaraj Bhat,22,1,A1
+147,118,ರಮೇಶ್,25,1,A1
+148,119,Santosh Reddy,36,1,A1
+149,119,Anand Naik,47,1,A2
+150,120,Vinod Gowda,42,1,A1
+151,121,ರಮೇಶ್,39,1,A1
+152,122,Basavaraj Reddy,24,1,A1
+153,122,ಸುರೇಶ್,19,1,A2
+154,123,ಪ್ರಕಾಶ್,43,1,A1
+155,123,ಶಿವಕುಮಾರ್,48,1,A2
+156,124,Basavaraj Patil,20,1,A1
+157,125,ಮಂಜುನಾಥ್,33,1,A1
+158,126,ಮಹೇಶ್,51,1,A1
+159,127,Santosh Naik,40,1,A1
+160,128,ನಾಗರಾಜ್,28,1,A1
+161,129,Nagaraj Hegde,57,1,A1
+162,130,Girish Bhat,29,1,A1
+163,131,Ramesh Achar,40,1,A1
+164,132,Ravi Achar,60,1,A1
+165,133,ರಮೇಶ್,58,1,A1
+166,133,Nagaraj Patil,49,1,A2
+167,134,Basavaraj Reddy,47,1,A1
+168,135,Girish Reddy,36,1,A1
+169,136,Harish Rao,49,1,A1
+170,136,ಸುರೇಶ್,25,1,A2
+171,137,Shivakumar Achar,57,1,A1
+172,138,Shivakumar Patil,23,1,A1
+173,138,Harish Murthy,50,1,A2
+174,139,Ravi Gowda,55,1,A1
+175,140,Ramesh Rao,57,1,A1
+176,141,Ramesh Shetty,45,1,A1
+177,142,Mahesh Bhat,26,1,A1
+178,143,ಶಿವಕುಮಾರ್,24,1,A1
+179,144,Vinod Rao,42,1,A1
+180,145,Prakash Gowda,55,1,A1
+181,145,Anand Gowda,19,1,A2
+182,146,Harish Naik,45,1,A1
+183,147,Ramesh Hegde,34,1,A1
+184,147,Shivakumar Achar,57,1,A2
+185,148,Harish Bhat,52,1,A1
+186,149,ರಮೇಶ್,22,1,A1
+187,150,Shivakumar Naik,21,1,A1
+188,151,ಮಹೇಶ್,31,1,A1
+189,151,ರಮೇಶ್,47,1,A2
+190,152,Suresh Shetty,50,1,A1
+191,153,Shivakumar Reddy,49,1,A1
+192,154,ರಮೇಶ್,60,1,A1
+193,154,Ramesh Hegde,37,1,A2
+194,155,ಮಂಜುನಾಥ್,53,1,A1
+195,156,Harish Patil,28,1,A1
+196,157,Naveen Rao,25,1,A1
+197,157,Basavaraj Murthy,34,1,A2
+198,158,Vinod Patil,40,1,A1
+199,159,Harish Rao,43,1,A1
+200,159,Ramesh Achar,52,1,A2
+201,160,ನಾಗರಾಜ್,52,1,A1
+202,161,Kiran Kumar,38,1,A1
+203,162,ರಮೇಶ್,28,1,A1
+204,163,Umesh Hegde,38,1,A1
+205,164,Prakash Kumar,36,1,A1
+206,164,Praveen Reddy,60,1,A2
+207,165,Ramesh Achar,52,1,A1
+208,166,Basavaraj Rao,57,1,A1
+209,167,ಶಿವಕುಮಾರ್,28,1,A1
+210,168,Harish Achar,44,1,A1
+211,169,ಸುರೇಶ್,29,1,A1
+212,170,Praveen Shetty,45,1,A1
+213,171,ಪ್ರಕಾಶ್,30,1,A1
+214,171,Girish Bhat,28,1,A2
+215,172,ಪ್ರಕಾಶ್,28,1,A1
+216,173,Vinod Murthy,32,1,A1
+217,173,ಶಿವಕುಮಾರ್,33,1,A2
+218,174,Prakash Reddy,30,1,A1
+219,174,ರಮೇಶ್,36,1,A2
+220,175,Mahesh Kumar,27,1,A1
+221,176,Vinod Hegde,48,1,A1
+222,176,Harish Hegde,46,1,A2
+223,177,ಪ್ರಕಾಶ್,60,1,A1
+224,178,ರಮೇಶ್,32,1,A1
+225,178,Basavaraj Murthy,54,1,A2
+226,179,Kiran Gouda,37,1,A1
+227,180,Kiran Rao,32,1,A1
+228,180,Manjunath Hegde,44,1,A2
+229,181,ರಮೇಶ್,38,1,A1
+230,182,ಶಿವಕುಮಾರ್,19,1,A1
+231,183,Ramesh Gowda,24,1,A1
+232,184,Ramesh Reddy,20,1,A1
+233,185,Prakash Gouda,33,1,A1
+234,186,Mahesh Bhat,56,1,A1
+235,187,Suresh Gowda,40,1,A1
+236,187,ಮಂಜುನಾಥ್,54,1,A2
+237,188,ಪ್ರಕಾಶ್,49,1,A1
+238,189,ಮಹೇಶ್,50,1,A1
+239,190,Anand Murthy,44,1,A1
+240,190,Mahesh Kumar,48,1,A2
+241,191,ರಮೇಶ್,44,1,A1
+242,192,ಮಂಜುನಾಥ್,31,1,A1
+243,193,ಮಹೇಶ್,45,1,A1
+244,194,ಸುರೇಶ್,37,1,A1
+245,195,Vinod Achar,49,1,A1
+246,196,ನಾಗರಾಜ್,22,1,A1
+247,197,Santosh Kumar,27,1,A1
+248,198,Shivakumar Achar,28,1,A1
+249,199,ಸುರೇಶ್,33,1,A1
+250,200,Naveen Naik,46,1,A1
+251,201,Santosh Achar,53,1,A1
+252,202,Prakash Gouda,37,1,A1
+253,202,ರಮೇಶ್,22,1,A2
+254,203,Mahesh Shetty,51,1,A1
+255,204,Girish Rao,58,1,A1
+256,205,Santosh Achar,25,1,A1
+257,206,Girish Gouda,40,1,A1
+258,207,ಸುರೇಶ್,42,1,A1
+259,207,Umesh Kumar,50,1,A2
+260,208,Mahesh Bhat,21,1,A1
+261,209,Suresh Naik,25,1,A1
+262,210,ಶಿವಕುಮಾರ್,33,1,A1
+263,210,Shivakumar Gowda,44,1,A2
+264,211,Mahesh Shetty,56,1,A1
+265,212,Ramesh Bhat,41,1,A1
+266,213,ಮಂಜುನಾಥ್,27,1,A1
+267,213,ರಮೇಶ್,29,1,A2
+268,214,Anand Gowda,39,1,A1
+269,215,Nagaraj Shetty,20,1,A1
+270,216,Umesh Hegde,38,1,A1
+271,217,Girish Achar,47,1,A1
+272,218,ನಾಗರಾಜ್,27,1,A1
+273,219,Girish Hegde,21,1,A1
+274,219,Shivakumar Gowda,42,1,A2
+275,220,ಪ್ರಕಾಶ್,20,1,A1
+276,220,Suresh Bhat,22,1,A2
+277,221,Naveen Kumar,46,1,A1
+278,222,Harish Rao,50,1,A1
+279,223,Kiran Reddy,42,1,A1
+280,224,ಮಂಜುನಾಥ್,40,1,A1
+281,225,Anand Hegde,55,1,A1
+282,225,ರಮೇಶ್,52,1,A2
+283,226,Basavaraj Kumar,43,1,A1
+284,227,Ravi Murthy,56,1,A1
+285,227,Santosh Hegde,47,1,A2
+286,228,Santosh Rao,51,1,A1
+287,229,Vinod Murthy,20,1,A1
+288,229,Suresh Patil,38,1,A2
+289,230,ಮಹೇಶ್,57,1,A1
+290,230,Santosh Achar,38,1,A2
+291,231,Manjunath Murthy,23,1,A1
+292,232,Mahesh Naik,42,1,A1
+293,232,Naveen Achar,31,1,A2
+294,233,Ravi Rao,38,1,A1
+295,234,Mahesh Reddy,21,1,A1
+296,234,Prakash Patil,42,1,A2
+297,235,Ramesh Reddy,38,1,A1
+298,236,Suresh Murthy,35,1,A1
+299,237,Santosh Patil,32,1,A1
+300,237,Anand Gowda,24,1,A2
+301,238,ಪ್ರಕಾಶ್,56,1,A1
+302,238,Ramesh Kumar,57,1,A2
+303,239,Shivakumar Kumar,53,1,A1
+304,240,Suresh Kumar,27,1,A1
+305,240,Praveen Bhat,19,1,A2
+306,241,Harish Murthy,59,1,A1
+307,242,Umesh Naik,40,1,A1
+308,243,Ramesh Hegde,48,1,A1
+309,244,Ravi Bhat,45,1,A1
+310,245,Anand Naik,22,1,A1
+311,246,Manjunath Gowda,38,1,A1
+312,246,Ramesh Gouda,19,1,A2
+313,247,ಪ್ರಕಾಶ್,37,1,A1
+314,248,ಮಂಜುನಾಥ್,24,1,A1
+315,249,Girish Rao,40,1,A1
+316,250,ಸುರೇಶ್,36,1,A1
+317,250,Shivakumar Kumar,30,1,A2
+318,251,Prakash Gowda,58,1,A1
+319,251,Shivakumar Gouda,30,1,A2
+320,252,Kiran Bhat,36,1,A1
+321,252,ಮಂಜುನಾಥ್,46,1,A2
+322,253,Prakash Reddy,41,1,A1
+323,253,Santosh Kumar,52,1,A2
+324,254,Praveen Gouda,49,1,A1
+325,254,Nagaraj Naik,31,1,A2
+326,255,Basavaraj Murthy,41,1,A1
+327,255,ಶಿವಕುಮಾರ್,32,1,A2
+328,256,Basavaraj Shetty,53,1,A1
+329,257,Harish Shetty,57,1,A1
+330,258,ಮಂಜುನಾಥ್,59,1,A1
+331,259,Santosh Rao,34,1,A1
+332,260,Harish Bhat,46,1,A1
+333,261,Ramesh Kumar,27,1,A1
+334,262,Shivakumar Reddy,51,1,A1
+335,262,ಮಂಜುನಾಥ್,45,1,A2
+336,263,Harish Hegde,43,1,A1
+337,264,Ramesh Murthy,38,1,A1
+338,265,Kiran Achar,40,1,A1
+339,265,Harish Patil,53,1,A2
+340,266,Umesh Naik,55,1,A1
+341,267,Anand Shetty,49,1,A1
+342,268,Anand Kumar,50,1,A1
+343,269,Girish Rao,26,1,A1
+344,270,Anand Reddy,21,1,A1
+345,271,ಪ್ರಕಾಶ್,29,1,A1
+346,272,ನಾಗರಾಜ್,31,1,A1
+347,272,Basavaraj Naik,51,1,A2
+348,273,Umesh Reddy,49,1,A1
+349,274,Harish Rao,25,1,A1
+350,275,Harish Achar,31,1,A1
+351,276,Girish Bhat,30,1,A1
+352,277,Umesh Reddy,25,1,A1
+353,277,Praveen Naik,37,1,A2
+354,278,Santosh Kumar,49,1,A1
+355,279,Umesh Gouda,34,1,A1
+356,280,Ramesh Hegde,47,1,A1
+357,280,Basavaraj Bhat,52,1,A2
+358,281,ಮಂಜುನಾಥ್,55,1,A1
+359,282,Basavaraj Gouda,53,1,A1
+360,283,Manjunath Bhat,49,1,A1
+361,284,Ramesh Murthy,45,1,A1
+362,285,Mahesh Shetty,57,1,A1
+363,286,Girish Rao,20,1,A1
+364,287,Nagaraj Gowda,60,1,A1
+365,287,Umesh Shetty,32,1,A2
+366,288,ಮಂಜುನಾಥ್,48,1,A1
+367,289,Naveen Kumar,52,1,A1
+368,290,Shivakumar Naik,55,1,A1
+369,291,Basavaraj Rao,23,1,A1
+370,292,Vinod Shetty,36,1,A1
+371,293,Mahesh Shetty,46,1,A1
+372,294,Vinod Gowda,59,1,A1
+373,295,Shivakumar Rao,21,1,A1
+374,295,Harish Kumar,32,1,A2
+375,296,ರಮೇಶ್,21,1,A1
+376,297,Girish Hegde,32,1,A1
+377,298,ಪ್ರಕಾಶ್,46,1,A1
+378,299,Shivakumar Murthy,27,1,A1
+379,300,Praveen Naik,31,1,A1
+380,301,ಸುರೇಶ್,34,1,A1
+381,302,ಮಹೇಶ್,19,1,A1
+382,303,Anand Rao,46,1,A1
+383,304,Basavaraj Murthy,47,1,A1
+384,305,Suresh Gowda,47,1,A1
+385,306,Basavaraj Rao,36,1,A1
+386,307,Naveen Reddy,41,1,A1
+387,307,Santosh Kumar,59,1,A2
+388,308,ಪ್ರಕಾಶ್,40,1,A1
+389,309,Basavaraj Gowda,21,1,A1
+390,309,ಮಹೇಶ್,49,1,A2
+391,310,Naveen Achar,58,1,A1
+392,311,ರಮೇಶ್,35,1,A1
+393,312,Suresh Gouda,38,1,A1
+394,312,ಮಂಜುನಾಥ್,48,1,A2
+395,313,Nagaraj Naik,19,1,A1
+396,314,Santosh Reddy,20,1,A1
+397,315,Prakash Reddy,41,1,A1
+398,316,ಸುರೇಶ್,34,1,A1
+399,317,Santosh Shetty,35,1,A1
+400,318,Prakash Reddy,30,1,A1
+401,319,Girish Gowda,48,1,A1
+402,320,Girish Achar,42,1,A1
+403,321,Girish Reddy,29,1,A1
+404,322,Girish Naik,41,1,A1
+405,322,Shivakumar Reddy,42,1,A2
+406,323,Girish Reddy,40,1,A1
+407,323,Vinod Gowda,32,1,A2
+408,324,Shivakumar Achar,32,1,A1
+409,325,Vinod Kumar,29,1,A1
+410,325,Anand Rao,32,1,A2
+411,326,Kiran Gouda,52,1,A1
+412,327,ಮಹೇಶ್,23,1,A1
+413,328,Manjunath Achar,51,1,A1
+414,328,Girish Murthy,36,1,A2
+415,329,ಶಿವಕುಮಾರ್,54,1,A1
+416,329,Manjunath Shetty,58,1,A2
+417,330,Manjunath Kumar,44,1,A1
+418,331,Ramesh Reddy,43,1,A1
+419,331,Naveen Reddy,26,1,A2
+420,332,ಶಿವಕುಮಾರ್,55,1,A1
+421,333,Ramesh Gouda,49,1,A1
+422,334,Basavaraj Gouda,40,1,A1
+423,335,ಮಹೇಶ್,42,1,A1
+424,335,Prakash Patil,48,1,A2
+425,336,Ravi Naik,48,1,A1
+426,336,Anand Hegde,55,1,A2
+427,337,ಶಿವಕುಮಾರ್,55,1,A1
+428,337,Manjunath Shetty,54,1,A2
+429,338,ಮಹೇಶ್,52,1,A1
+430,339,Ramesh Achar,36,1,A1
+431,340,Nagaraj Murthy,38,1,A1
+432,340,Anand Gouda,55,1,A2
+433,341,Harish Naik,52,1,A1
+434,342,Harish Gouda,28,1,A1
+435,343,Harish Murthy,34,1,A1
+436,343,Girish Bhat,26,1,A2
+437,344,Girish Reddy,29,1,A1
+438,345,Suresh Achar,41,1,A1
+439,345,Mahesh Murthy,59,1,A2
+440,346,Praveen Patil,60,1,A1
+441,347,ಸುರೇಶ್,59,1,A1
+442,348,Anand Bhat,24,1,A1
+443,349,ಮಹೇಶ್,38,1,A1
+444,350,Suresh Shetty,37,1,A1
+445,351,Suresh Gouda,23,1,A1
+446,352,ಮಹೇಶ್,45,1,A1
+447,353,ಮಹೇಶ್,46,1,A1
+448,354,ಪ್ರಕಾಶ್,38,1,A1
+449,355,Anand Bhat,44,1,A1
+450,356,Santosh Gowda,44,1,A1
+451,357,ನಾಗರಾಜ್,38,1,A1
+452,358,Naveen Naik,20,1,A1
+453,359,ಮಂಜುನಾಥ್,24,1,A1
+454,359,Umesh Bhat,52,1,A2
+455,360,Harish Murthy,33,1,A1
+456,361,Kiran Shetty,36,1,A1
+457,361,Vinod Rao,31,1,A2
+458,362,Shivakumar Rao,47,1,A1
+459,363,Girish Gouda,34,1,A1
+460,363,ಶಿವಕುಮಾರ್,55,1,A2
+461,364,Kiran Bhat,21,1,A1
+462,365,Ramesh Patil,38,1,A1
+463,366,Prakash Rao,23,1,A1
+464,367,Prakash Achar,24,1,A1
+465,367,ರಮೇಶ್,53,1,A2
+466,368,Anand Shetty,26,1,A1
+467,369,Anand Achar,53,1,A1
+468,370,Shivakumar Bhat,24,1,A1
+469,371,Praveen Kumar,27,1,A1
+470,372,ಮಹೇಶ್,25,1,A1
+471,373,Mahesh Murthy,28,1,A1
+472,373,Shivakumar Naik,25,1,A2
+473,374,ರಮೇಶ್,21,1,A1
+474,375,Kiran Gouda,52,1,A1
+475,376,ಸುರೇಶ್,22,1,A1
+476,377,Girish Hegde,36,1,A1
+477,378,Anand Murthy,39,1,A1
+478,378,Mahesh Bhat,44,1,A2
+479,379,Naveen Achar,20,1,A1
+480,380,Mahesh Hegde,45,1,A1
+481,380,Suresh Patil,31,1,A2
+482,381,Santosh Gowda,43,1,A1
+483,382,Ravi Gouda,30,1,A1
+484,382,Naveen Murthy,27,1,A2
+485,383,Nagaraj Bhat,31,1,A1
+486,384,Anand Gowda,31,1,A1
+487,384,ರಮೇಶ್,48,1,A2
+488,385,Mahesh Reddy,52,1,A1
+489,386,ಮಂಜುನಾಥ್,23,1,A1
+490,387,ಸುರೇಶ್,23,1,A1
+491,388,Ramesh Naik,48,1,A1
+492,388,Ramesh Patil,46,1,A2
+493,389,ಸುರೇಶ್,47,1,A1
+494,389,Santosh Murthy,33,1,A2
+495,390,ಮಹೇಶ್,58,1,A1
+496,391,Ravi Shetty,23,1,A1
+497,392,Harish Bhat,46,1,A1
+498,393,Nagaraj Reddy,43,1,A1
+499,394,ರಮೇಶ್,38,1,A1
+500,395,Ravi Achar,33,1,A1
+501,396,ಶಿವಕುಮಾರ್,57,1,A1
+502,397,Anand Kumar,27,1,A1
+503,397,Ramesh Murthy,51,1,A2
+504,398,Nagaraj Kumar,41,1,A1
+505,399,Shivakumar Shetty,44,1,A1
+506,400,Naveen Gouda,41,1,A1
+507,401,Manjunath Patil,22,1,A1
+508,402,Girish Gouda,39,1,A1
+509,403,Manjunath Kumar,41,1,A1
+510,404,Manjunath Patil,50,1,A1
+511,405,Umesh Gouda,22,1,A1
+512,406,Naveen Bhat,27,1,A1
+513,407,Naveen Patil,59,1,A1
+514,407,Shivakumar Patil,21,1,A2
+515,408,Santosh Naik,43,1,A1
+516,409,ಸುರೇಶ್,49,1,A1
+517,410,Suresh Hegde,22,1,A1
+518,411,Anand Achar,20,1,A1
+519,412,Shivakumar Naik,60,1,A1
+520,412,Mahesh Bhat,40,1,A2
+521,413,Suresh Shetty,41,1,A1
+522,414,Umesh Rao,22,1,A1
+523,414,Praveen Naik,26,1,A2
+524,415,Anand Gouda,35,1,A1
+525,416,Girish Naik,27,1,A1
+526,417,ನಾಗರಾಜ್,36,1,A1
+527,418,Shivakumar Gouda,25,1,A1
+528,419,Santosh Hegde,54,1,A1
+529,420,ನಾಗರಾಜ್,53,1,A1
+530,421,ಮಂಜುನಾಥ್,36,1,A1
+531,422,Praveen Shetty,20,1,A1
+532,423,Anand Kumar,28,1,A1
+533,424,ಶಿವಕುಮಾರ್,43,1,A1
+534,425,ಮಂಜುನಾಥ್,50,1,A1
+535,426,ಮಂಜುನಾಥ್,52,1,A1
+536,427,Santosh Murthy,50,1,A1
+537,428,Shivakumar Rao,49,1,A1
+538,429,Harish Gowda,34,1,A1
+539,430,Anand Gowda,31,1,A1
+540,431,Basavaraj Murthy,59,1,A1
+541,432,ಶಿವಕುಮಾರ್,60,1,A1
+542,433,Mahesh Gowda,27,1,A1
+543,434,ಮಹೇಶ್,39,1,A1
+544,434,ಮಹೇಶ್,57,1,A2
+545,435,Kiran Gouda,32,1,A1
+546,435,Basavaraj Patil,34,1,A2
+547,436,Girish Shetty,21,1,A1
+548,437,Manjunath Hegde,45,1,A1
+549,438,ಮಹೇಶ್,55,1,A1
+550,439,Suresh Shetty,23,1,A1
+551,440,Vinod Naik,58,1,A1
+552,441,Shivakumar Rao,31,1,A1
+553,442,Manjunath Hegde,37,1,A1
+554,442,Anand Gouda,29,1,A2
+555,443,Anand Murthy,50,1,A1
+556,444,Umesh Bhat,59,1,A1
+557,445,Kiran Bhat,38,1,A1
+558,445,Kiran Kumar,34,1,A2
+559,446,Ramesh Murthy,53,1,A1
+560,446,ಪ್ರಕಾಶ್,19,1,A2
+561,447,Harish Shetty,45,1,A1
+562,448,Santosh Rao,45,1,A1
+563,449,Ramesh Gowda,24,1,A1
+564,449,Harish Naik,55,1,A2
+565,450,ರಮೇಶ್,55,1,A1
+566,451,ಸುರೇಶ್,50,1,A1
+567,452,Naveen Shetty,47,1,A1
+568,452,Mahesh Kumar,31,1,A2
+569,453,Harish Hegde,31,1,A1
+570,453,ಶಿವಕುಮಾರ್,26,1,A2
+571,454,Prakash Gowda,59,1,A1
+572,455,Santosh Shetty,43,1,A1
+573,456,Manjunath Naik,43,1,A1
+574,457,Harish Shetty,25,1,A1
+575,458,ನಾಗರಾಜ್,22,1,A1
+576,459,ರಮೇಶ್,21,1,A1
+577,460,Umesh Bhat,41,1,A1
+578,461,Ravi Murthy,43,1,A1
+579,462,Harish Rao,29,1,A1
+580,463,Nagaraj Hegde,52,1,A1
+581,464,Girish Reddy,30,1,A1
+582,465,Prakash Rao,27,1,A1
+583,466,ಪ್ರಕಾಶ್,29,1,A1
+584,466,ಮಂಜುನಾಥ್,51,1,A2
+585,467,ರಮೇಶ್,30,1,A1
+586,468,Manjunath Murthy,36,1,A1
+587,468,Anand Naik,52,1,A2
+588,469,ಪ್ರಕಾಶ್,26,1,A1
+589,470,ಮಂಜುನಾಥ್,47,1,A1
+590,470,Manjunath Shetty,37,1,A2
+591,471,Santosh Achar,48,1,A1
+592,471,Umesh Bhat,22,1,A2
+593,472,ಮಂಜುನಾಥ್,21,1,A1
+594,473,ಮಂಜುನಾಥ್,59,1,A1
+595,474,Anand Gouda,47,1,A1
+596,475,Shivakumar Naik,35,1,A1
+597,476,ಶಿವಕುಮಾರ್,32,1,A1
+598,477,Shivakumar Rao,56,1,A1
+599,478,ಶಿವಕುಮಾರ್,24,1,A1
+600,478,Shivakumar Hegde,43,1,A2
+601,479,Mahesh Gowda,40,1,A1
+602,480,ನಾಗರಾಜ್,32,1,A1
+603,480,Naveen Naik,39,1,A2
+604,481,Santosh Patil,19,1,A1
+605,482,Anand Achar,32,1,A1
+606,482,Vinod Murthy,26,1,A2
+607,483,Naveen Reddy,23,1,A1
+608,484,Vinod Hegde,56,1,A1
+609,484,Ramesh Achar,32,1,A2
+610,485,Nagaraj Reddy,55,1,A1
+611,485,ರಮೇಶ್,32,1,A2
+612,486,Basavaraj Naik,48,1,A1
+613,486,Kiran Gouda,49,1,A2
+614,487,Praveen Murthy,45,1,A1
+615,487,Manjunath Bhat,52,1,A2
+616,488,Anand Hegde,25,1,A1
+617,489,Santosh Naik,33,1,A1
+618,489,Umesh Hegde,22,1,A2
+619,490,Vinod Reddy,49,1,A1
+620,491,Manjunath Kumar,21,1,A1
+621,492,Shivakumar Murthy,58,1,A1
+622,492,Ravi Gowda,57,1,A2
+623,493,Shivakumar Shetty,21,1,A1
+624,493,Mahesh Hegde,23,1,A2
+625,494,Mahesh Hegde,40,1,A1
+626,495,Naveen Murthy,36,1,A1
+627,496,Santosh Achar,44,1,A1
+628,497,Vinod Achar,30,1,A1
+629,497,Nagaraj Rao,35,1,A2
+630,498,Girish Hegde,32,1,A1
+631,499,Ravi Hegde,59,1,A1
+632,499,Santosh Murthy,56,1,A2
+633,500,ನಾಗರಾಜ್,37,1,A1

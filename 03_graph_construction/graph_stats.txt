@@ -1,0 +1,18 @@
+=== COMPONENT 3: GRAPH CONSTRUCTION ===
+Node counts by label:
+  Complainant: 500
+  District: 5
+  FIR: 500
+  Location: 500
+  Person: 631
+  PoliceStation: 20
+  Section: 5
+  Victim: 500
+Edge counts by relationship:
+  ACCUSED_IN: 631
+  CHARGED_UNDER: 647
+  COMPLAINANT_IN: 500
+  IN_DISTRICT: 20
+  OCCURRED_AT: 500
+  REGISTERED_AT: 500
+  VICTIM_IN: 500

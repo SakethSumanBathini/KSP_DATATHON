@@ -1,0 +1,30 @@
+[SemanticIndex] embeddings unavailable (OSError); falling back to TF-IDF. In production (open internet) this uses real embeddings.
+╔══ INVESTIGATION BRIEF — FIR 100026104202600001 (Case 1) ══╗
+Generated: 2026-07-06T10:39:45  |  KAVERI Crime Intelligence
+
+CHARGES: BNS 331 (House-trespass / house-breaking); BNS 305 (Theft in dwelling house / house-breaking related theft)
+
+▸ SIMILAR MODUS OPERANDI (5 cases):
+   FIR 7 (sim 0.839): On the night of 19-03-2026, unknown persons broke into a ground-floor residence …
+   FIR 13 (sim 0.81): On the night of 06-04-2026, unknown persons broke into a ground-floor residence …
+   FIR 3 (sim 0.806): On the night of 07-03-2026, unknown persons broke into a ground-floor residence …
+   FIR 5 (sim 0.785): On the night of 13-03-2026, unknown persons broke into a ground-floor residence …
+   FIR 10 (sim 0.751): On the night of 28-03-2026, unknown persons broke into a ground-floor residence …
+
+▸ CRIMINAL NETWORK:
+   Linked to 7 cases via shared evidence: [2, 3, 4, 5, 7, 10, 13]
+   Shared phones: ['+916513911270', '+919333883801']
+   Accused: Ramesh Gowda [Identity:0]
+
+▸ NEAR-REPEAT ANALYSIS (400m / 42 days):
+   13 nearby burglaries; closest 85m away
+
+▸ RECOMMENDED INVESTIGATIVE LEADS:
+   1. Request CDR for shared phone(s) ['+916513911270', '+919333883801'] — linked across cases [2, 3, 4, 5, 7, 10, 13].
+   2. Near-repeat pattern: 13 burglaries within 400m/42 days (closest: case 6 at 85m). Advise patrol density + resident alerts.
+   3. Accused 'Ramesh Gowda' is a resolved repeat offender (5 linked cases) — prioritize.
+
+▸ EVIDENCE TRAIL (all claims cited): FIRs [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+
+⚠ All connections derived from recorded FIR data. Human officer verifies before action.
+╚════════════════════════════════════════════════════════════╝

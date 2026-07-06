@@ -1,0 +1,19 @@
+=== COMPONENT 6: HYBRID RETRIEVAL ===
+
+--- MODE 2: Semantic MO similarity (query: night ground-floor glass-break burglary) ---
+  case 9 (sim 0.477): On the night of 25-03-2026, unknown persons broke into a ground-floor residence by breaking the rear window glass while 
+  case 7 (sim 0.465): On the night of 19-03-2026, unknown persons broke into a ground-floor residence by breaking the rear window glass while 
+  case 13 (sim 0.463): On the night of 06-04-2026, unknown persons broke into a ground-floor residence by breaking the rear window glass while 
+  case 11 (sim 0.462): On the night of 31-03-2026, unknown persons broke into a ground-floor residence by breaking the rear window glass while 
+  case 12 (sim 0.456): On the night of 03-04-2026, unknown persons broke into a ground-floor residence by breaking the rear window glass while 
+
+--- MODE 1: Network around a Set A cluster case (shared phone -> linked cases) ---
+  case 1: linked to 7 other cases via shared entities
+  linked cases: [2, 3, 4, 5, 7, 10, 13]
+  accused (with resolved identity): [{'name': 'Ramesh Gowda', 'accused_id': 1, 'identity': 'Identity:0'}]
+
+--- MODE 1b: Cross-case history for the Kannada-variant identity ---
+  {'identity': 'Identity:4', 'member_count': 3, 'cases': [{'accused_id': 17, 'name': 'ರಾಮಯ್ಯ.ಕೆ', 'case_id': 17}, {'accused_id': 18, 'name': 'Ramaiah K', 'case_id': 18}, {'accused_id': 19, 'name': 'ರಾಮು', 'case_id': 19}]}
+
+--- MODE 3: Structured filter (burglaries in Mysuru) ---
+  10 burglary cases in Mysuru: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]

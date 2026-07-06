@@ -1,0 +1,2085 @@
+{
+  "identity_mappings": [
+    {
+      "true_person": "CLUSTERA_PERSON_0",
+      "accused_ids": [
+        1,
+        4,
+        7,
+        10,
+        13
+      ],
+      "name_used": "Ramesh Gowda"
+    },
+    {
+      "true_person": "CLUSTERA_PERSON_1",
+      "accused_ids": [
+        2,
+        5,
+        8,
+        11,
+        14
+      ],
+      "name_used": "Suresh Naik"
+    },
+    {
+      "true_person": "CLUSTERA_PERSON_2",
+      "accused_ids": [
+        3,
+        6,
+        9,
+        12
+      ],
+      "name_used": "ಮಂಜುನಾಥ್"
+    },
+    {
+      "true_person": "SETB_PERSON_PRAKASH",
+      "accused_ids": [
+        15,
+        16
+      ],
+      "name_used": "Prakash Reddy"
+    },
+    {
+      "true_person": "TRUE_PERSON_RAMAIAH",
+      "accused_ids": [
+        17,
+        18,
+        19
+      ],
+      "name_variants": [
+        "ರಾಮಯ್ಯ.ಕೆ",
+        "Ramaiah K",
+        "ರಾಮು"
+      ],
+      "note": "Same real person, three transliteration/script variants — the core ER test case"
+    }
+  ],
+  "seeded_connections": {
+    "set_A_mysuru_cluster": {
+      "description": "14 burglary FIRs, shared phone across 5, shared UPI across 2, near-repeat spatial cluster",
+      "phone": "+916513911270",
+      "upi": "rameshgo@okhdfc",
+      "fir_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "shared_phone_fir_ids": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "shared_upi_fir_ids": [
+        2,
+        4
+      ]
+    },
+    "set_B_cross_district_vehicle": {
+      "description": "Same accused + same vehicle across Bengaluru Urban and Belagavi FIRs, different IOs",
+      "vehicle": "KA-01-XY-1505",
+      "fir_ids": [
+        15,
+        16
+      ],
+      "accused_ids": [
+        15,
+        16
+      ]
+    },
+    "set_C_kannada_variant_identity": {
+      "description": "One person written 3 ways (ರಾಮಯ್ಯ.ಕೆ / Ramaiah K / ರಾಮು) across 3 FIRs",
+      "name_variants": [
+        "ರಾಮಯ್ಯ.ಕೆ",
+        "Ramaiah K",
+        "ರಾಮು"
+      ],
+      "fir_ids": [
+        17,
+        18,
+        19
+      ],
+      "accused_ids": [
+        17,
+        18,
+        19
+      ]
+    },
+    "hard_near_match_decoys": {
+      "description": "5 PAIRS of plausibly-confusable DIFFERENT people (similar name+age+district, NO shared entity). A weak resolver merges these; a correct one must NOT. These pairs are the precision test — they must stay SEPARATE.",
+      "must_not_merge_pairs": [
+        [
+          26,
+          27
+        ],
+        [
+          28,
+          29
+        ],
+        [
+          30,
+          31
+        ],
+        [
+          32,
+          33
+        ],
+        [
+          34,
+          35
+        ]
+      ]
+    },
+    "decoy_rameshes": {
+      "description": "6 DIFFERENT people all named 'Ramesh' age 34 — must NOT be merged with each other or with the variant identity",
+      "accused_ids": [
+        20,
+        21,
+        22,
+        23,
+        24,
+        25
+      ]
+    }
+  },
+  "entity_to_fir": [
+    {
+      "type": "phone",
+      "value": "+919333883801",
+      "case_id": 1
+    },
+    {
+      "type": "phone",
+      "value": "+916513911270",
+      "case_id": 1
+    },
+    {
+      "type": "phone",
+      "value": "+918271060646",
+      "case_id": 2
+    },
+    {
+      "type": "phone",
+      "value": "+916513911270",
+      "case_id": 2
+    },
+    {
+      "type": "upi",
+      "value": "rameshgo@okhdfc",
+      "case_id": 2
+    },
+    {
+      "type": "phone",
+      "value": "+919544157050",
+      "case_id": 3
+    },
+    {
+      "type": "phone",
+      "value": "+916513911270",
+      "case_id": 3
+    },
+    {
+      "type": "phone",
+      "value": "+919333883801",
+      "case_id": 4
+    },
+    {
+      "type": "phone",
+      "value": "+916513911270",
+      "case_id": 4
+    },
+    {
+      "type": "upi",
+      "value": "rameshgo@okhdfc",
+      "case_id": 4
+    },
+    {
+      "type": "phone",
+      "value": "+918271060646",
+      "case_id": 5
+    },
+    {
+      "type": "phone",
+      "value": "+916513911270",
+      "case_id": 5
+    },
+    {
+      "type": "phone",
+      "value": "+919544157050",
+      "case_id": 6
+    },
+    {
+      "type": "phone",
+      "value": "+919333883801",
+      "case_id": 7
+    },
+    {
+      "type": "phone",
+      "value": "+918271060646",
+      "case_id": 8
+    },
+    {
+      "type": "phone",
+      "value": "+919544157050",
+      "case_id": 9
+    },
+    {
+      "type": "phone",
+      "value": "+919333883801",
+      "case_id": 10
+    },
+    {
+      "type": "phone",
+      "value": "+918271060646",
+      "case_id": 11
+    },
+    {
+      "type": "phone",
+      "value": "+919544157050",
+      "case_id": 12
+    },
+    {
+      "type": "phone",
+      "value": "+919333883801",
+      "case_id": 13
+    },
+    {
+      "type": "phone",
+      "value": "+918271060646",
+      "case_id": 14
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-01-XY-1505",
+      "case_id": 15
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-01-XY-1505",
+      "case_id": 16
+    },
+    {
+      "type": "phone",
+      "value": "+918469398855",
+      "case_id": 17
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-CD-5782",
+      "case_id": 17
+    },
+    {
+      "type": "phone",
+      "value": "+918469398855",
+      "case_id": 18
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-CD-5782",
+      "case_id": 18
+    },
+    {
+      "type": "phone",
+      "value": "+918469398855",
+      "case_id": 19
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-CD-5782",
+      "case_id": 19
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-05-XY-2909",
+      "case_id": 36
+    },
+    {
+      "type": "phone",
+      "value": "+918900089889",
+      "case_id": 37
+    },
+    {
+      "type": "phone",
+      "value": "+917625241149",
+      "case_id": 38
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-MN-9681",
+      "case_id": 38
+    },
+    {
+      "type": "phone",
+      "value": "+919009097759",
+      "case_id": 40
+    },
+    {
+      "type": "phone",
+      "value": "+917720031461",
+      "case_id": 41
+    },
+    {
+      "type": "phone",
+      "value": "+918498377670",
+      "case_id": 42
+    },
+    {
+      "type": "phone",
+      "value": "+918706172593",
+      "case_id": 45
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-03-MN-0429",
+      "case_id": 46
+    },
+    {
+      "type": "phone",
+      "value": "+918352993058",
+      "case_id": 48
+    },
+    {
+      "type": "phone",
+      "value": "+917071000083",
+      "case_id": 49
+    },
+    {
+      "type": "phone",
+      "value": "+916533381008",
+      "case_id": 50
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-03-AB-7993",
+      "case_id": 51
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-04-XY-3871",
+      "case_id": 52
+    },
+    {
+      "type": "phone",
+      "value": "+919666622279",
+      "case_id": 53
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-04-MN-3501",
+      "case_id": 53
+    },
+    {
+      "type": "phone",
+      "value": "+918062620119",
+      "case_id": 55
+    },
+    {
+      "type": "phone",
+      "value": "+918332597704",
+      "case_id": 56
+    },
+    {
+      "type": "phone",
+      "value": "+918480305232",
+      "case_id": 57
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-04-XY-3285",
+      "case_id": 59
+    },
+    {
+      "type": "phone",
+      "value": "+918753269320",
+      "case_id": 60
+    },
+    {
+      "type": "phone",
+      "value": "+919611391481",
+      "case_id": 62
+    },
+    {
+      "type": "phone",
+      "value": "+917468742307",
+      "case_id": 64
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-03-XY-5802",
+      "case_id": 65
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-CD-2033",
+      "case_id": 68
+    },
+    {
+      "type": "phone",
+      "value": "+917609913565",
+      "case_id": 70
+    },
+    {
+      "type": "phone",
+      "value": "+916870063336",
+      "case_id": 71
+    },
+    {
+      "type": "phone",
+      "value": "+918267084334",
+      "case_id": 74
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-03-XY-3315",
+      "case_id": 74
+    },
+    {
+      "type": "phone",
+      "value": "+918825285916",
+      "case_id": 75
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-01-XY-6953",
+      "case_id": 77
+    },
+    {
+      "type": "phone",
+      "value": "+917072502623",
+      "case_id": 79
+    },
+    {
+      "type": "phone",
+      "value": "+918934483281",
+      "case_id": 81
+    },
+    {
+      "type": "phone",
+      "value": "+918159841303",
+      "case_id": 82
+    },
+    {
+      "type": "phone",
+      "value": "+917942200673",
+      "case_id": 85
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-04-XY-2351",
+      "case_id": 86
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-04-CD-5575",
+      "case_id": 87
+    },
+    {
+      "type": "phone",
+      "value": "+919035121001",
+      "case_id": 88
+    },
+    {
+      "type": "phone",
+      "value": "+919351590375",
+      "case_id": 89
+    },
+    {
+      "type": "phone",
+      "value": "+918117365484",
+      "case_id": 90
+    },
+    {
+      "type": "phone",
+      "value": "+917837609404",
+      "case_id": 91
+    },
+    {
+      "type": "phone",
+      "value": "+917713297546",
+      "case_id": 92
+    },
+    {
+      "type": "phone",
+      "value": "+916870658692",
+      "case_id": 93
+    },
+    {
+      "type": "phone",
+      "value": "+916522009256",
+      "case_id": 94
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-05-AB-2776",
+      "case_id": 94
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-CD-1671",
+      "case_id": 95
+    },
+    {
+      "type": "phone",
+      "value": "+917263681420",
+      "case_id": 96
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-01-CD-9746",
+      "case_id": 97
+    },
+    {
+      "type": "phone",
+      "value": "+916358569794",
+      "case_id": 98
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-01-XY-0118",
+      "case_id": 98
+    },
+    {
+      "type": "phone",
+      "value": "+919087041226",
+      "case_id": 99
+    },
+    {
+      "type": "phone",
+      "value": "+917246403621",
+      "case_id": 103
+    },
+    {
+      "type": "phone",
+      "value": "+916378185076",
+      "case_id": 104
+    },
+    {
+      "type": "phone",
+      "value": "+917629068721",
+      "case_id": 109
+    },
+    {
+      "type": "phone",
+      "value": "+919063515464",
+      "case_id": 110
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-05-XY-3085",
+      "case_id": 110
+    },
+    {
+      "type": "phone",
+      "value": "+918870371234",
+      "case_id": 112
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-MN-5628",
+      "case_id": 112
+    },
+    {
+      "type": "phone",
+      "value": "+917809426399",
+      "case_id": 113
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-04-AB-8319",
+      "case_id": 113
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-04-XY-3989",
+      "case_id": 114
+    },
+    {
+      "type": "phone",
+      "value": "+917775912073",
+      "case_id": 115
+    },
+    {
+      "type": "phone",
+      "value": "+916721641832",
+      "case_id": 116
+    },
+    {
+      "type": "phone",
+      "value": "+917920379390",
+      "case_id": 117
+    },
+    {
+      "type": "phone",
+      "value": "+918892990245",
+      "case_id": 118
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-01-AB-8045",
+      "case_id": 119
+    },
+    {
+      "type": "phone",
+      "value": "+918001262697",
+      "case_id": 120
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-05-CD-0179",
+      "case_id": 121
+    },
+    {
+      "type": "phone",
+      "value": "+919467489902",
+      "case_id": 122
+    },
+    {
+      "type": "phone",
+      "value": "+916521068694",
+      "case_id": 123
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-AB-9696",
+      "case_id": 123
+    },
+    {
+      "type": "phone",
+      "value": "+917932430490",
+      "case_id": 125
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-03-MN-0133",
+      "case_id": 125
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-01-CD-1695",
+      "case_id": 126
+    },
+    {
+      "type": "phone",
+      "value": "+919569063287",
+      "case_id": 127
+    },
+    {
+      "type": "phone",
+      "value": "+917749477487",
+      "case_id": 128
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-05-AB-2672",
+      "case_id": 129
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-01-CD-6990",
+      "case_id": 130
+    },
+    {
+      "type": "phone",
+      "value": "+916056029778",
+      "case_id": 131
+    },
+    {
+      "type": "phone",
+      "value": "+916203571622",
+      "case_id": 132
+    },
+    {
+      "type": "phone",
+      "value": "+918924517285",
+      "case_id": 133
+    },
+    {
+      "type": "phone",
+      "value": "+918416125634",
+      "case_id": 134
+    },
+    {
+      "type": "phone",
+      "value": "+917229643491",
+      "case_id": 135
+    },
+    {
+      "type": "phone",
+      "value": "+917467918609",
+      "case_id": 138
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-MN-1876",
+      "case_id": 138
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-01-XY-8283",
+      "case_id": 139
+    },
+    {
+      "type": "phone",
+      "value": "+919546125785",
+      "case_id": 140
+    },
+    {
+      "type": "phone",
+      "value": "+919123584220",
+      "case_id": 141
+    },
+    {
+      "type": "phone",
+      "value": "+919377176416",
+      "case_id": 144
+    },
+    {
+      "type": "phone",
+      "value": "+919796911051",
+      "case_id": 148
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-CD-1416",
+      "case_id": 148
+    },
+    {
+      "type": "phone",
+      "value": "+917348324013",
+      "case_id": 151
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-01-CD-7458",
+      "case_id": 151
+    },
+    {
+      "type": "phone",
+      "value": "+918351430407",
+      "case_id": 153
+    },
+    {
+      "type": "phone",
+      "value": "+917007296099",
+      "case_id": 154
+    },
+    {
+      "type": "phone",
+      "value": "+917821150836",
+      "case_id": 155
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-01-AB-6558",
+      "case_id": 156
+    },
+    {
+      "type": "phone",
+      "value": "+916208509663",
+      "case_id": 157
+    },
+    {
+      "type": "phone",
+      "value": "+919938883999",
+      "case_id": 158
+    },
+    {
+      "type": "phone",
+      "value": "+918879785187",
+      "case_id": 159
+    },
+    {
+      "type": "phone",
+      "value": "+917072202568",
+      "case_id": 160
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-04-CD-1858",
+      "case_id": 160
+    },
+    {
+      "type": "phone",
+      "value": "+916857506825",
+      "case_id": 161
+    },
+    {
+      "type": "phone",
+      "value": "+916871050895",
+      "case_id": 165
+    },
+    {
+      "type": "phone",
+      "value": "+916772453538",
+      "case_id": 166
+    },
+    {
+      "type": "phone",
+      "value": "+918006153641",
+      "case_id": 168
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-04-AB-8035",
+      "case_id": 168
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-04-AB-0140",
+      "case_id": 169
+    },
+    {
+      "type": "phone",
+      "value": "+919979941840",
+      "case_id": 172
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-04-XY-9802",
+      "case_id": 172
+    },
+    {
+      "type": "phone",
+      "value": "+919743609148",
+      "case_id": 173
+    },
+    {
+      "type": "phone",
+      "value": "+916192877709",
+      "case_id": 181
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-04-CD-0791",
+      "case_id": 181
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-05-CD-2092",
+      "case_id": 183
+    },
+    {
+      "type": "phone",
+      "value": "+917665996402",
+      "case_id": 184
+    },
+    {
+      "type": "phone",
+      "value": "+919978042340",
+      "case_id": 185
+    },
+    {
+      "type": "phone",
+      "value": "+917442236152",
+      "case_id": 186
+    },
+    {
+      "type": "phone",
+      "value": "+917471488178",
+      "case_id": 187
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-AB-3524",
+      "case_id": 187
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-CD-3216",
+      "case_id": 188
+    },
+    {
+      "type": "phone",
+      "value": "+919326126193",
+      "case_id": 189
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-CD-6755",
+      "case_id": 190
+    },
+    {
+      "type": "phone",
+      "value": "+916427102324",
+      "case_id": 191
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-05-XY-7729",
+      "case_id": 192
+    },
+    {
+      "type": "phone",
+      "value": "+919244414256",
+      "case_id": 194
+    },
+    {
+      "type": "phone",
+      "value": "+919689901258",
+      "case_id": 195
+    },
+    {
+      "type": "phone",
+      "value": "+918202054773",
+      "case_id": 196
+    },
+    {
+      "type": "phone",
+      "value": "+919702838223",
+      "case_id": 197
+    },
+    {
+      "type": "phone",
+      "value": "+918290064064",
+      "case_id": 198
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-MN-7392",
+      "case_id": 201
+    },
+    {
+      "type": "phone",
+      "value": "+917436664332",
+      "case_id": 203
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-01-AB-3601",
+      "case_id": 203
+    },
+    {
+      "type": "phone",
+      "value": "+917762010308",
+      "case_id": 204
+    },
+    {
+      "type": "phone",
+      "value": "+919966356937",
+      "case_id": 205
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-05-MN-3342",
+      "case_id": 205
+    },
+    {
+      "type": "phone",
+      "value": "+918818773743",
+      "case_id": 206
+    },
+    {
+      "type": "phone",
+      "value": "+916168922545",
+      "case_id": 207
+    },
+    {
+      "type": "phone",
+      "value": "+918431344818",
+      "case_id": 208
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-01-XY-3634",
+      "case_id": 208
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-04-MN-8401",
+      "case_id": 209
+    },
+    {
+      "type": "phone",
+      "value": "+918745036984",
+      "case_id": 210
+    },
+    {
+      "type": "phone",
+      "value": "+918026398530",
+      "case_id": 211
+    },
+    {
+      "type": "phone",
+      "value": "+917045272888",
+      "case_id": 212
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-05-MN-5327",
+      "case_id": 212
+    },
+    {
+      "type": "phone",
+      "value": "+916911344168",
+      "case_id": 213
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-01-AB-4566",
+      "case_id": 213
+    },
+    {
+      "type": "phone",
+      "value": "+918186606907",
+      "case_id": 216
+    },
+    {
+      "type": "phone",
+      "value": "+917358376269",
+      "case_id": 218
+    },
+    {
+      "type": "phone",
+      "value": "+917290246907",
+      "case_id": 219
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-05-CD-1154",
+      "case_id": 219
+    },
+    {
+      "type": "phone",
+      "value": "+919045451084",
+      "case_id": 220
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-AB-8784",
+      "case_id": 220
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-MN-6005",
+      "case_id": 221
+    },
+    {
+      "type": "phone",
+      "value": "+917462720105",
+      "case_id": 222
+    },
+    {
+      "type": "phone",
+      "value": "+919045257469",
+      "case_id": 223
+    },
+    {
+      "type": "phone",
+      "value": "+919444030709",
+      "case_id": 224
+    },
+    {
+      "type": "phone",
+      "value": "+919507996088",
+      "case_id": 225
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-01-AB-7793",
+      "case_id": 226
+    },
+    {
+      "type": "phone",
+      "value": "+916210750666",
+      "case_id": 229
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-01-AB-7108",
+      "case_id": 229
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-05-XY-7666",
+      "case_id": 230
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-03-AB-7465",
+      "case_id": 231
+    },
+    {
+      "type": "phone",
+      "value": "+917392981755",
+      "case_id": 232
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-03-CD-6996",
+      "case_id": 234
+    },
+    {
+      "type": "phone",
+      "value": "+918520464771",
+      "case_id": 237
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-03-XY-3660",
+      "case_id": 237
+    },
+    {
+      "type": "phone",
+      "value": "+916802681369",
+      "case_id": 238
+    },
+    {
+      "type": "phone",
+      "value": "+918542730765",
+      "case_id": 241
+    },
+    {
+      "type": "phone",
+      "value": "+918836589050",
+      "case_id": 242
+    },
+    {
+      "type": "phone",
+      "value": "+916724338730",
+      "case_id": 246
+    },
+    {
+      "type": "phone",
+      "value": "+918084678462",
+      "case_id": 247
+    },
+    {
+      "type": "phone",
+      "value": "+916705183368",
+      "case_id": 251
+    },
+    {
+      "type": "phone",
+      "value": "+918041154022",
+      "case_id": 253
+    },
+    {
+      "type": "phone",
+      "value": "+918056630935",
+      "case_id": 255
+    },
+    {
+      "type": "phone",
+      "value": "+919010766813",
+      "case_id": 256
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-CD-7952",
+      "case_id": 259
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-03-AB-2111",
+      "case_id": 260
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-05-AB-4237",
+      "case_id": 261
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-05-CD-4399",
+      "case_id": 262
+    },
+    {
+      "type": "phone",
+      "value": "+916707707233",
+      "case_id": 264
+    },
+    {
+      "type": "phone",
+      "value": "+919284708765",
+      "case_id": 267
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-01-MN-2119",
+      "case_id": 267
+    },
+    {
+      "type": "phone",
+      "value": "+917880099212",
+      "case_id": 272
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-03-MN-0967",
+      "case_id": 272
+    },
+    {
+      "type": "phone",
+      "value": "+917636628515",
+      "case_id": 274
+    },
+    {
+      "type": "phone",
+      "value": "+917584253812",
+      "case_id": 276
+    },
+    {
+      "type": "phone",
+      "value": "+917935095826",
+      "case_id": 277
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-CD-9126",
+      "case_id": 277
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-03-XY-1773",
+      "case_id": 278
+    },
+    {
+      "type": "phone",
+      "value": "+917046221979",
+      "case_id": 279
+    },
+    {
+      "type": "phone",
+      "value": "+918425729975",
+      "case_id": 280
+    },
+    {
+      "type": "phone",
+      "value": "+917596773621",
+      "case_id": 282
+    },
+    {
+      "type": "phone",
+      "value": "+916188668855",
+      "case_id": 283
+    },
+    {
+      "type": "phone",
+      "value": "+919609306536",
+      "case_id": 284
+    },
+    {
+      "type": "phone",
+      "value": "+916914444620",
+      "case_id": 285
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-01-XY-3230",
+      "case_id": 287
+    },
+    {
+      "type": "phone",
+      "value": "+916501085471",
+      "case_id": 288
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-04-MN-2467",
+      "case_id": 289
+    },
+    {
+      "type": "phone",
+      "value": "+917889294898",
+      "case_id": 290
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-XY-7889",
+      "case_id": 291
+    },
+    {
+      "type": "phone",
+      "value": "+919177694824",
+      "case_id": 293
+    },
+    {
+      "type": "phone",
+      "value": "+917376296471",
+      "case_id": 294
+    },
+    {
+      "type": "phone",
+      "value": "+919412864184",
+      "case_id": 295
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-03-XY-0975",
+      "case_id": 295
+    },
+    {
+      "type": "phone",
+      "value": "+917935522911",
+      "case_id": 296
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-05-MN-5041",
+      "case_id": 296
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-01-XY-8298",
+      "case_id": 298
+    },
+    {
+      "type": "phone",
+      "value": "+917843765793",
+      "case_id": 299
+    },
+    {
+      "type": "phone",
+      "value": "+916533673925",
+      "case_id": 301
+    },
+    {
+      "type": "phone",
+      "value": "+919638593512",
+      "case_id": 302
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-MN-2369",
+      "case_id": 303
+    },
+    {
+      "type": "phone",
+      "value": "+916132707520",
+      "case_id": 305
+    },
+    {
+      "type": "phone",
+      "value": "+917168290847",
+      "case_id": 306
+    },
+    {
+      "type": "phone",
+      "value": "+918579743013",
+      "case_id": 307
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-05-XY-5516",
+      "case_id": 307
+    },
+    {
+      "type": "phone",
+      "value": "+916507220195",
+      "case_id": 308
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-01-XY-9675",
+      "case_id": 309
+    },
+    {
+      "type": "phone",
+      "value": "+916149714300",
+      "case_id": 312
+    },
+    {
+      "type": "phone",
+      "value": "+917630350198",
+      "case_id": 313
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-01-AB-6777",
+      "case_id": 313
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-01-XY-2108",
+      "case_id": 314
+    },
+    {
+      "type": "phone",
+      "value": "+918914802334",
+      "case_id": 317
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-05-MN-5496",
+      "case_id": 317
+    },
+    {
+      "type": "phone",
+      "value": "+919674021345",
+      "case_id": 318
+    },
+    {
+      "type": "phone",
+      "value": "+919822196297",
+      "case_id": 319
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-05-AB-7473",
+      "case_id": 319
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-05-CD-9370",
+      "case_id": 321
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-04-AB-5386",
+      "case_id": 325
+    },
+    {
+      "type": "phone",
+      "value": "+919280469550",
+      "case_id": 326
+    },
+    {
+      "type": "phone",
+      "value": "+916435344904",
+      "case_id": 327
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-05-MN-7451",
+      "case_id": 327
+    },
+    {
+      "type": "phone",
+      "value": "+916432862524",
+      "case_id": 328
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-AB-0838",
+      "case_id": 328
+    },
+    {
+      "type": "phone",
+      "value": "+918740220428",
+      "case_id": 330
+    },
+    {
+      "type": "phone",
+      "value": "+918678991177",
+      "case_id": 331
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-CD-5694",
+      "case_id": 331
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-04-AB-2062",
+      "case_id": 335
+    },
+    {
+      "type": "phone",
+      "value": "+918571739226",
+      "case_id": 337
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-AB-6321",
+      "case_id": 337
+    },
+    {
+      "type": "phone",
+      "value": "+919876152586",
+      "case_id": 340
+    },
+    {
+      "type": "phone",
+      "value": "+918248182395",
+      "case_id": 341
+    },
+    {
+      "type": "phone",
+      "value": "+917637925036",
+      "case_id": 343
+    },
+    {
+      "type": "phone",
+      "value": "+916288484295",
+      "case_id": 344
+    },
+    {
+      "type": "phone",
+      "value": "+919355526067",
+      "case_id": 346
+    },
+    {
+      "type": "phone",
+      "value": "+919919290826",
+      "case_id": 350
+    },
+    {
+      "type": "phone",
+      "value": "+916512130115",
+      "case_id": 351
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-01-MN-4828",
+      "case_id": 352
+    },
+    {
+      "type": "phone",
+      "value": "+919618480902",
+      "case_id": 353
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-03-CD-0857",
+      "case_id": 353
+    },
+    {
+      "type": "phone",
+      "value": "+916510190835",
+      "case_id": 355
+    },
+    {
+      "type": "phone",
+      "value": "+917862717447",
+      "case_id": 360
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-01-CD-7314",
+      "case_id": 361
+    },
+    {
+      "type": "phone",
+      "value": "+916237716981",
+      "case_id": 364
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-05-MN-7713",
+      "case_id": 364
+    },
+    {
+      "type": "phone",
+      "value": "+917227860478",
+      "case_id": 365
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-04-MN-0293",
+      "case_id": 365
+    },
+    {
+      "type": "phone",
+      "value": "+917604364762",
+      "case_id": 367
+    },
+    {
+      "type": "phone",
+      "value": "+917276180292",
+      "case_id": 368
+    },
+    {
+      "type": "phone",
+      "value": "+918534944515",
+      "case_id": 369
+    },
+    {
+      "type": "phone",
+      "value": "+916041973407",
+      "case_id": 371
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-05-MN-1398",
+      "case_id": 374
+    },
+    {
+      "type": "phone",
+      "value": "+918287215960",
+      "case_id": 375
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-MN-5005",
+      "case_id": 375
+    },
+    {
+      "type": "phone",
+      "value": "+919349745658",
+      "case_id": 378
+    },
+    {
+      "type": "phone",
+      "value": "+916122485905",
+      "case_id": 379
+    },
+    {
+      "type": "phone",
+      "value": "+919093014025",
+      "case_id": 381
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-05-XY-9588",
+      "case_id": 381
+    },
+    {
+      "type": "phone",
+      "value": "+916544630840",
+      "case_id": 382
+    },
+    {
+      "type": "phone",
+      "value": "+919195652469",
+      "case_id": 384
+    },
+    {
+      "type": "phone",
+      "value": "+918114098986",
+      "case_id": 386
+    },
+    {
+      "type": "phone",
+      "value": "+918055514411",
+      "case_id": 388
+    },
+    {
+      "type": "phone",
+      "value": "+919291033710",
+      "case_id": 389
+    },
+    {
+      "type": "phone",
+      "value": "+916076617674",
+      "case_id": 390
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-01-AB-7545",
+      "case_id": 391
+    },
+    {
+      "type": "phone",
+      "value": "+916442024356",
+      "case_id": 392
+    },
+    {
+      "type": "phone",
+      "value": "+917731399104",
+      "case_id": 394
+    },
+    {
+      "type": "phone",
+      "value": "+918939282437",
+      "case_id": 396
+    },
+    {
+      "type": "phone",
+      "value": "+916829462640",
+      "case_id": 398
+    },
+    {
+      "type": "phone",
+      "value": "+917564065470",
+      "case_id": 400
+    },
+    {
+      "type": "phone",
+      "value": "+919477793145",
+      "case_id": 401
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-AB-6675",
+      "case_id": 401
+    },
+    {
+      "type": "phone",
+      "value": "+918206044196",
+      "case_id": 405
+    },
+    {
+      "type": "phone",
+      "value": "+917269105675",
+      "case_id": 407
+    },
+    {
+      "type": "phone",
+      "value": "+919263090549",
+      "case_id": 409
+    },
+    {
+      "type": "phone",
+      "value": "+917559667711",
+      "case_id": 413
+    },
+    {
+      "type": "phone",
+      "value": "+918806698999",
+      "case_id": 414
+    },
+    {
+      "type": "phone",
+      "value": "+919019587582",
+      "case_id": 415
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-04-AB-1013",
+      "case_id": 417
+    },
+    {
+      "type": "phone",
+      "value": "+916268380493",
+      "case_id": 418
+    },
+    {
+      "type": "phone",
+      "value": "+919614071783",
+      "case_id": 419
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-CD-5075",
+      "case_id": 422
+    },
+    {
+      "type": "phone",
+      "value": "+917507288053",
+      "case_id": 424
+    },
+    {
+      "type": "phone",
+      "value": "+919887800109",
+      "case_id": 425
+    },
+    {
+      "type": "phone",
+      "value": "+919757973896",
+      "case_id": 426
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-03-CD-0902",
+      "case_id": 426
+    },
+    {
+      "type": "phone",
+      "value": "+916887981014",
+      "case_id": 428
+    },
+    {
+      "type": "phone",
+      "value": "+918871123035",
+      "case_id": 429
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-AB-5280",
+      "case_id": 429
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-AB-3308",
+      "case_id": 430
+    },
+    {
+      "type": "phone",
+      "value": "+916033332681",
+      "case_id": 431
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-04-XY-4176",
+      "case_id": 432
+    },
+    {
+      "type": "phone",
+      "value": "+917284059203",
+      "case_id": 433
+    },
+    {
+      "type": "phone",
+      "value": "+916919082469",
+      "case_id": 434
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-01-MN-6371",
+      "case_id": 434
+    },
+    {
+      "type": "phone",
+      "value": "+917134565547",
+      "case_id": 436
+    },
+    {
+      "type": "phone",
+      "value": "+916671875973",
+      "case_id": 438
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-03-CD-7752",
+      "case_id": 438
+    },
+    {
+      "type": "phone",
+      "value": "+918300002720",
+      "case_id": 439
+    },
+    {
+      "type": "phone",
+      "value": "+917785093308",
+      "case_id": 440
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-04-CD-0669",
+      "case_id": 440
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-MN-1971",
+      "case_id": 441
+    },
+    {
+      "type": "phone",
+      "value": "+917072365368",
+      "case_id": 442
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-04-MN-4158",
+      "case_id": 443
+    },
+    {
+      "type": "phone",
+      "value": "+917500841020",
+      "case_id": 444
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-CD-9477",
+      "case_id": 445
+    },
+    {
+      "type": "phone",
+      "value": "+916728620760",
+      "case_id": 448
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-XY-9045",
+      "case_id": 450
+    },
+    {
+      "type": "phone",
+      "value": "+919523556800",
+      "case_id": 453
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-05-AB-9947",
+      "case_id": 454
+    },
+    {
+      "type": "phone",
+      "value": "+916508052755",
+      "case_id": 455
+    },
+    {
+      "type": "phone",
+      "value": "+918775649662",
+      "case_id": 458
+    },
+    {
+      "type": "phone",
+      "value": "+917926882902",
+      "case_id": 462
+    },
+    {
+      "type": "phone",
+      "value": "+917508270201",
+      "case_id": 465
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-01-XY-1388",
+      "case_id": 465
+    },
+    {
+      "type": "phone",
+      "value": "+916635402174",
+      "case_id": 466
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-04-CD-1542",
+      "case_id": 466
+    },
+    {
+      "type": "phone",
+      "value": "+916402849606",
+      "case_id": 467
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-05-XY-1175",
+      "case_id": 467
+    },
+    {
+      "type": "phone",
+      "value": "+916196942929",
+      "case_id": 468
+    },
+    {
+      "type": "phone",
+      "value": "+916577410774",
+      "case_id": 471
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-03-XY-4541",
+      "case_id": 472
+    },
+    {
+      "type": "phone",
+      "value": "+916951105447",
+      "case_id": 473
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-04-MN-9404",
+      "case_id": 473
+    },
+    {
+      "type": "phone",
+      "value": "+918250881949",
+      "case_id": 474
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-04-MN-1440",
+      "case_id": 474
+    },
+    {
+      "type": "phone",
+      "value": "+919611549344",
+      "case_id": 475
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-04-XY-9494",
+      "case_id": 475
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-02-MN-4328",
+      "case_id": 476
+    },
+    {
+      "type": "phone",
+      "value": "+919579087960",
+      "case_id": 477
+    },
+    {
+      "type": "phone",
+      "value": "+917225628183",
+      "case_id": 478
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-04-AB-2159",
+      "case_id": 479
+    },
+    {
+      "type": "phone",
+      "value": "+916463689941",
+      "case_id": 480
+    },
+    {
+      "type": "phone",
+      "value": "+916025676901",
+      "case_id": 481
+    },
+    {
+      "type": "phone",
+      "value": "+916246426418",
+      "case_id": 483
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-05-MN-8782",
+      "case_id": 483
+    },
+    {
+      "type": "phone",
+      "value": "+919390477447",
+      "case_id": 486
+    },
+    {
+      "type": "phone",
+      "value": "+918549483254",
+      "case_id": 490
+    },
+    {
+      "type": "phone",
+      "value": "+918856192433",
+      "case_id": 491
+    },
+    {
+      "type": "phone",
+      "value": "+916283098873",
+      "case_id": 492
+    },
+    {
+      "type": "phone",
+      "value": "+916317220036",
+      "case_id": 493
+    },
+    {
+      "type": "phone",
+      "value": "+916075666651",
+      "case_id": 495
+    },
+    {
+      "type": "phone",
+      "value": "+918597179151",
+      "case_id": 496
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-04-CD-5765",
+      "case_id": 496
+    },
+    {
+      "type": "phone",
+      "value": "+916921757530",
+      "case_id": 500
+    },
+    {
+      "type": "vehicle",
+      "value": "KA-05-MN-3395",
+      "case_id": 500
+    }
+  ],
+  "meta": {
+    "seed": 20260706,
+    "n_firs": 500,
+    "generated": "2026-07-06T10:38:32.709116"
+  }
+}

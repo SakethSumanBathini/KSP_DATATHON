@@ -1,0 +1,501 @@
+VictimMasterID,CaseMasterID,VictimName,AgeYear,GenderID,VictimPolice
+1,1,Radha Naik,43,2,0
+2,2,Prakash Gouda,26,1,0
+3,3,ಸುರೇಶ್,42,1,0
+4,4,Kiran Kumar,42,1,0
+5,5,Lakshmi Reddy,18,2,0
+6,6,Ravi Hegde,53,1,0
+7,7,Ramesh Naik,70,1,0
+8,8,Vijaya Achar,35,2,0
+9,9,Radha Kumar,21,2,0
+10,10,Radha Gowda,32,2,0
+11,11,Geetha Hegde,37,2,0
+12,12,Lakshmi Achar,63,2,0
+13,13,Pooja Gowda,55,2,0
+14,14,ಮಂಜುನಾಥ್,28,1,0
+15,15,Anand Gowda,60,1,0
+16,16,Manjunath Achar,46,1,0
+17,17,Roopa Murthy,21,2,0
+18,18,Kavya Kumar,60,2,0
+19,19,Praveen Gowda,28,1,0
+20,20,Anitha Achar,69,2,0
+21,21,ಪ್ರಕಾಶ್,54,1,0
+22,22,ಸುರೇಶ್,54,1,0
+23,23,ನಾಗರಾಜ್,43,1,0
+24,24,Suresh Gouda,48,1,0
+25,25,Ravi Murthy,18,1,0
+26,26,Vinod Kumar,43,1,0
+27,27,Umesh Murthy,45,1,0
+28,28,Pooja Murthy,52,2,0
+29,29,ಸುರೇಶ್,64,1,0
+30,30,Shobha Rao,52,2,0
+31,31,Lakshmi Reddy,24,2,0
+32,32,Praveen Reddy,59,1,0
+33,33,Shivakumar Naik,52,1,0
+34,34,Pooja Naik,43,2,0
+35,35,Basavaraj Murthy,43,1,0
+36,36,Manjunath Patil,57,1,0
+37,37,Ramesh Gouda,72,1,0
+38,38,Roopa Rao,18,2,0
+39,39,ಸುನೀತಾ,20,2,0
+40,40,ಲಕ್ಷ್ಮಿ,32,2,0
+41,41,Girish Kumar,63,1,0
+42,42,Shivakumar Kumar,61,1,0
+43,43,Santosh Naik,23,1,0
+44,44,Ramesh Gowda,25,1,0
+45,45,Girish Murthy,49,1,0
+46,46,Vinod Patil,67,1,0
+47,47,Prakash Hegde,73,1,0
+48,48,Lakshmi Murthy,50,2,0
+49,49,Pooja Reddy,49,2,0
+50,50,Kavya Shetty,70,2,0
+51,51,Anitha Murthy,47,2,0
+52,52,ಪ್ರಕಾಶ್,19,1,0
+53,53,Vinod Kumar,25,1,0
+54,54,Kavya Rao,41,2,0
+55,55,Suresh Kumar,69,1,0
+56,56,Naveen Hegde,33,1,0
+57,57,Shivakumar Patil,21,1,0
+58,58,Nagaraj Bhat,21,1,0
+59,59,ನಾಗರಾಜ್,46,1,0
+60,60,Nagaraj Bhat,51,1,0
+61,61,Nandini Patil,28,2,0
+62,62,Kavya Gouda,70,2,0
+63,63,Lakshmi Patil,67,2,0
+64,64,Shobha Patil,53,2,0
+65,65,ರಾಧಾ,20,2,0
+66,66,Lakshmi Murthy,68,2,0
+67,67,Shobha Murthy,59,2,0
+68,68,Manjunath Kumar,42,1,0
+69,69,ಲಕ್ಷ್ಮಿ,68,2,0
+70,70,Shobha Murthy,63,2,0
+71,71,ಶಿವಕುಮಾರ್,36,1,0
+72,72,Nandini Gowda,75,2,0
+73,73,ಪ್ರಕಾಶ್,49,1,0
+74,74,Girish Gowda,40,1,0
+75,75,Praveen Achar,58,1,0
+76,76,Ramesh Hegde,41,1,0
+77,77,ಸುರೇಶ್,52,1,0
+78,78,Radha Hegde,47,2,0
+79,79,Suresh Shetty,26,1,0
+80,80,Mahesh Achar,34,1,0
+81,81,ಸುರೇಶ್,19,1,0
+82,82,Kavya Shetty,45,2,0
+83,83,Santosh Naik,47,1,0
+84,84,Kavya Reddy,45,2,0
+85,85,Girish Murthy,20,1,0
+86,86,Anitha Hegde,32,2,0
+87,87,Anitha Gouda,32,2,0
+88,88,Sunitha Naik,52,2,0
+89,89,Harish Naik,51,1,0
+90,90,Mahesh Shetty,65,1,0
+91,91,Lakshmi Murthy,58,2,0
+92,92,Harish Murthy,31,1,0
+93,93,Umesh Achar,47,1,0
+94,94,ನಾಗರಾಜ್,47,1,0
+95,95,Ravi Achar,45,1,0
+96,96,Geetha Kumar,41,2,0
+97,97,ಗೀತಾ,44,2,0
+98,98,Radha Rao,40,2,0
+99,99,ಮಂಜುನಾಥ್,38,1,0
+100,100,Shobha Gouda,23,2,0
+101,101,Basavaraj Reddy,22,1,0
+102,102,Lakshmi Achar,32,2,0
+103,103,Ramesh Gowda,62,1,0
+104,104,Suresh Kumar,67,1,0
+105,105,ಕಾವ್ಯ,36,2,0
+106,106,Anand Hegde,39,1,0
+107,107,Pooja Reddy,61,2,0
+108,108,ಪ್ರಕಾಶ್,63,1,0
+109,109,Radha Hegde,64,2,0
+110,110,Savitha Gouda,51,2,0
+111,111,ಸವಿತಾ,24,2,0
+112,112,ಸುರೇಶ್,23,1,0
+113,113,Pooja Hegde,25,2,0
+114,114,Anitha Shetty,53,2,0
+115,115,ಪ್ರಕಾಶ್,49,1,0
+116,116,Pooja Hegde,58,2,0
+117,117,Kiran Bhat,35,1,0
+118,118,Sunitha Hegde,53,2,0
+119,119,ರಾಧಾ,27,2,0
+120,120,Shivakumar Gouda,37,1,0
+121,121,Naveen Hegde,49,1,0
+122,122,Naveen Reddy,32,1,0
+123,123,ಪ್ರಕಾಶ್,35,1,0
+124,124,Harish Achar,50,1,0
+125,125,Santosh Naik,47,1,0
+126,126,Santosh Bhat,69,1,0
+127,127,Nandini Murthy,51,2,0
+128,128,ಮಂಜುನಾಥ್,61,1,0
+129,129,Kavya Reddy,62,2,0
+130,130,Radha Gouda,36,2,0
+131,131,Vinod Rao,56,1,0
+132,132,Geetha Shetty,51,2,0
+133,133,ನಾಗರಾಜ್,38,1,0
+134,134,ಕಾವ್ಯ,32,2,0
+135,135,Ravi Naik,59,1,0
+136,136,Prakash Gowda,46,1,0
+137,137,Kiran Gowda,26,1,0
+138,138,Radha Gouda,18,2,0
+139,139,ಪ್ರಕಾಶ್,58,1,0
+140,140,ನಾಗರಾಜ್,46,1,0
+141,141,ಕಾವ್ಯ,23,2,0
+142,142,Kiran Patil,62,1,0
+143,143,Manjunath Bhat,36,1,0
+144,144,Nagaraj Patil,50,1,0
+145,145,ಕಾವ್ಯ,19,2,0
+146,146,Kiran Naik,23,1,0
+147,147,ರಾಧಾ,54,2,0
+148,148,Praveen Naik,65,1,0
+149,149,Vinod Hegde,36,1,0
+150,150,ಮಂಜುನಾಥ್,27,1,0
+151,151,Santosh Rao,72,1,0
+152,152,Manjunath Gouda,23,1,0
+153,153,ನಾಗರಾಜ್,72,1,0
+154,154,ಲಕ್ಷ್ಮಿ,64,2,0
+155,155,ಲಕ್ಷ್ಮಿ,57,2,0
+156,156,Basavaraj Rao,36,1,0
+157,157,ಸುನೀತಾ,40,2,0
+158,158,Nandini Shetty,47,2,0
+159,159,Suresh Hegde,38,1,0
+160,160,Shobha Rao,72,2,0
+161,161,Anand Rao,62,1,0
+162,162,Ravi Bhat,75,1,0
+163,163,Nandini Patil,54,2,0
+164,164,Kavya Hegde,32,2,0
+165,165,ಲಕ್ಷ್ಮಿ,51,2,0
+166,166,Geetha Naik,42,2,0
+167,167,Radha Achar,75,2,0
+168,168,Nandini Shetty,63,2,0
+169,169,Radha Rao,62,2,0
+170,170,Girish Patil,63,1,0
+171,171,ಗೀತಾ,75,2,0
+172,172,Vinod Hegde,32,1,0
+173,173,Anitha Patil,33,2,0
+174,174,Praveen Achar,32,1,0
+175,175,Umesh Rao,52,1,0
+176,176,Radha Murthy,62,2,0
+177,177,ಗೀತಾ,45,2,0
+178,178,Suresh Bhat,63,1,0
+179,179,Pooja Kumar,62,2,0
+180,180,Lakshmi Achar,27,2,0
+181,181,Umesh Bhat,39,1,0
+182,182,Nandini Rao,69,2,0
+183,183,Roopa Shetty,75,2,0
+184,184,Sunitha Rao,37,2,0
+185,185,ಮಂಜುನಾಥ್,34,1,0
+186,186,Anitha Murthy,22,2,0
+187,187,Nandini Gouda,43,2,0
+188,188,Mahesh Achar,56,1,0
+189,189,Manjunath Kumar,58,1,0
+190,190,Manjunath Kumar,60,1,0
+191,191,ಪ್ರಕಾಶ್,54,1,0
+192,192,Prakash Bhat,22,1,0
+193,193,Harish Reddy,23,1,0
+194,194,ಗೀತಾ,54,2,0
+195,195,Basavaraj Hegde,25,1,0
+196,196,Ramesh Gouda,70,1,0
+197,197,Geetha Gouda,65,2,0
+198,198,Vijaya Hegde,61,2,0
+199,199,Radha Shetty,39,2,0
+200,200,ಸವಿತಾ,64,2,0
+201,201,Manjunath Naik,72,1,0
+202,202,Radha Reddy,20,2,0
+203,203,Manjunath Bhat,69,1,0
+204,204,Mahesh Gowda,50,1,0
+205,205,Savitha Hegde,69,2,0
+206,206,Pooja Rao,42,2,0
+207,207,ನಾಗರಾಜ್,34,1,0
+208,208,Geetha Achar,54,2,0
+209,209,ಲಕ್ಷ್ಮಿ,37,2,0
+210,210,ರಮೇಶ್,28,1,0
+211,211,Basavaraj Shetty,64,1,0
+212,212,ನಾಗರಾಜ್,71,1,0
+213,213,Mahesh Rao,57,1,0
+214,214,Naveen Achar,54,1,0
+215,215,Manjunath Gowda,64,1,0
+216,216,Umesh Naik,35,1,0
+217,217,Kavya Bhat,53,2,0
+218,218,ಶಿವಕುಮಾರ್,40,1,0
+219,219,Pooja Kumar,72,2,0
+220,220,ರಾಧಾ,26,2,0
+221,221,Praveen Bhat,48,1,0
+222,222,Shobha Bhat,60,2,0
+223,223,Pooja Rao,27,2,0
+224,224,Savitha Achar,60,2,0
+225,225,Kiran Kumar,19,1,0
+226,226,Naveen Kumar,53,1,0
+227,227,ಗೀತಾ,62,2,0
+228,228,Pooja Murthy,58,2,0
+229,229,Girish Gowda,48,1,0
+230,230,ನಾಗರಾಜ್,20,1,0
+231,231,Radha Gowda,54,2,0
+232,232,Shobha Patil,39,2,0
+233,233,Nandini Kumar,59,2,0
+234,234,Nagaraj Murthy,56,1,0
+235,235,Naveen Gowda,19,1,0
+236,236,ಸವಿತಾ,60,2,0
+237,237,Kiran Hegde,57,1,0
+238,238,ಪ್ರಕಾಶ್,67,1,0
+239,239,Anitha Naik,48,2,0
+240,240,Vijaya Reddy,23,2,0
+241,241,Shobha Reddy,57,2,0
+242,242,Anitha Gouda,63,2,0
+243,243,ನಾಗರಾಜ್,27,1,0
+244,244,Roopa Rao,60,2,0
+245,245,ಮಂಜುನಾಥ್,73,1,0
+246,246,Vijaya Bhat,27,2,0
+247,247,Basavaraj Gowda,43,1,0
+248,248,Pooja Gowda,58,2,0
+249,249,Anitha Naik,18,2,0
+250,250,Pooja Shetty,74,2,0
+251,251,Harish Achar,28,1,0
+252,252,ಮಹೇಶ್,49,1,0
+253,253,Praveen Shetty,75,1,0
+254,254,ಶಿವಕುಮಾರ್,34,1,0
+255,255,Shivakumar Naik,30,1,0
+256,256,ಲಕ್ಷ್ಮಿ,49,2,0
+257,257,Vinod Achar,22,1,0
+258,258,Lakshmi Murthy,58,2,0
+259,259,Mahesh Rao,27,1,0
+260,260,ಕಾವ್ಯ,23,2,0
+261,261,Mahesh Achar,22,1,0
+262,262,Shobha Bhat,30,2,0
+263,263,Umesh Rao,61,1,0
+264,264,Vijaya Murthy,30,2,0
+265,265,ರಮೇಶ್,38,1,0
+266,266,ಮಹೇಶ್,34,1,0
+267,267,Umesh Achar,21,1,0
+268,268,ಸುರೇಶ್,23,1,0
+269,269,Mahesh Naik,46,1,0
+270,270,ಸುನೀತಾ,58,2,0
+271,271,Savitha Kumar,47,2,0
+272,272,Pooja Hegde,30,2,0
+273,273,Nagaraj Naik,49,1,0
+274,274,Roopa Naik,30,2,0
+275,275,ಮಂಜುನಾಥ್,32,1,0
+276,276,ನಾಗರಾಜ್,61,1,0
+277,277,Shobha Reddy,28,2,0
+278,278,Prakash Rao,32,1,0
+279,279,Basavaraj Rao,49,1,0
+280,280,Vijaya Shetty,55,2,0
+281,281,ಲಕ್ಷ್ಮಿ,23,2,0
+282,282,Lakshmi Reddy,64,2,0
+283,283,Vijaya Patil,41,2,0
+284,284,Santosh Bhat,33,1,0
+285,285,Nandini Rao,61,2,0
+286,286,Vijaya Rao,34,2,0
+287,287,Vijaya Shetty,67,2,0
+288,288,ಪ್ರಕಾಶ್,23,1,0
+289,289,Lakshmi Bhat,62,2,0
+290,290,Mahesh Gowda,19,1,0
+291,291,Mahesh Patil,74,1,0
+292,292,Vijaya Achar,41,2,0
+293,293,Harish Patil,61,1,0
+294,294,Anand Gowda,37,1,0
+295,295,Harish Hegde,73,1,0
+296,296,Geetha Naik,49,2,0
+297,297,Praveen Rao,54,1,0
+298,298,ಶಿವಕುಮಾರ್,40,1,0
+299,299,ಮಹೇಶ್,32,1,0
+300,300,Basavaraj Achar,68,1,0
+301,301,Roopa Gouda,61,2,0
+302,302,Mahesh Kumar,27,1,0
+303,303,Kavya Shetty,61,2,0
+304,304,Radha Hegde,36,2,0
+305,305,Vinod Gouda,23,1,0
+306,306,Nagaraj Hegde,34,1,0
+307,307,Geetha Reddy,69,2,0
+308,308,ಸವಿತಾ,56,2,0
+309,309,Shobha Gouda,61,2,0
+310,310,Kavya Kumar,28,2,0
+311,311,Radha Naik,19,2,0
+312,312,Ramesh Murthy,65,1,0
+313,313,ಲಕ್ಷ್ಮಿ,62,2,0
+314,314,ರಮೇಶ್,68,1,0
+315,315,Shobha Patil,54,2,0
+316,316,Praveen Reddy,60,1,0
+317,317,Anand Shetty,31,1,0
+318,318,Prakash Kumar,58,1,0
+319,319,Radha Rao,51,2,0
+320,320,Shobha Naik,30,2,0
+321,321,ಸವಿತಾ,36,2,0
+322,322,ಸವಿತಾ,74,2,0
+323,323,Pooja Kumar,38,2,0
+324,324,ನಾಗರಾಜ್,21,1,0
+325,325,Harish Achar,25,1,0
+326,326,Pooja Kumar,69,2,0
+327,327,Suresh Kumar,40,1,0
+328,328,Praveen Kumar,26,1,0
+329,329,ಲಕ್ಷ್ಮಿ,67,2,0
+330,330,Radha Achar,60,2,0
+331,331,Nandini Hegde,67,2,0
+332,332,Shobha Kumar,38,2,0
+333,333,Kavya Gouda,30,2,0
+334,334,ಶಿವಕುಮಾರ್,45,1,0
+335,335,Prakash Reddy,52,1,0
+336,336,Kavya Hegde,48,2,0
+337,337,Shobha Rao,65,2,0
+338,338,Manjunath Hegde,75,1,0
+339,339,Ravi Reddy,72,1,0
+340,340,Praveen Reddy,39,1,0
+341,341,Shobha Reddy,62,2,0
+342,342,Praveen Bhat,26,1,0
+343,343,Prakash Kumar,67,1,0
+344,344,ಲಕ್ಷ್ಮಿ,61,2,0
+345,345,ಸುನೀತಾ,59,2,0
+346,346,Prakash Murthy,35,1,0
+347,347,ಶಿವಕುಮಾರ್,63,1,0
+348,348,ಗೀತಾ,24,2,0
+349,349,Harish Gowda,35,1,0
+350,350,Vijaya Patil,56,2,0
+351,351,Kavya Patil,44,2,0
+352,352,Pooja Achar,44,2,0
+353,353,Radha Gowda,42,2,0
+354,354,Harish Achar,67,1,0
+355,355,ಪ್ರಕಾಶ್,41,1,0
+356,356,Harish Rao,39,1,0
+357,357,Prakash Naik,50,1,0
+358,358,ಶಿವಕುಮಾರ್,50,1,0
+359,359,Savitha Reddy,39,2,0
+360,360,Suresh Gouda,37,1,0
+361,361,Radha Shetty,35,2,0
+362,362,Kavya Hegde,54,2,0
+363,363,Pooja Achar,24,2,0
+364,364,Anand Gouda,26,1,0
+365,365,Kavya Patil,18,2,0
+366,366,Radha Gowda,49,2,0
+367,367,Shobha Naik,72,2,0
+368,368,Vinod Murthy,67,1,0
+369,369,Kavya Bhat,44,2,0
+370,370,Savitha Murthy,55,2,0
+371,371,Kiran Hegde,44,1,0
+372,372,Kavya Murthy,49,2,0
+373,373,ಸುರೇಶ್,42,1,0
+374,374,ರಾಧಾ,40,2,0
+375,375,Kiran Patil,38,1,0
+376,376,Radha Patil,25,2,0
+377,377,Sunitha Gouda,27,2,0
+378,378,Kavya Murthy,39,2,0
+379,379,Savitha Gowda,45,2,0
+380,380,Savitha Reddy,58,2,0
+381,381,Nagaraj Murthy,49,1,0
+382,382,ಲಕ್ಷ್ಮಿ,39,2,0
+383,383,ಕಾವ್ಯ,54,2,0
+384,384,ಪ್ರಕಾಶ್,53,1,0
+385,385,Kavya Achar,19,2,0
+386,386,ನಾಗರಾಜ್,24,1,0
+387,387,Savitha Gouda,29,2,0
+388,388,Vinod Kumar,50,1,0
+389,389,ಶಿವಕುಮಾರ್,55,1,0
+390,390,Kiran Hegde,67,1,0
+391,391,ಶಿವಕುಮಾರ್,64,1,0
+392,392,ನಾಗರಾಜ್,42,1,0
+393,393,ಸುರೇಶ್,70,1,0
+394,394,ನಾಗರಾಜ್,38,1,0
+395,395,Umesh Shetty,24,1,0
+396,396,Lakshmi Shetty,62,2,0
+397,397,Suresh Hegde,67,1,0
+398,398,ಮಹೇಶ್,31,1,0
+399,399,Kavya Murthy,54,2,0
+400,400,Kavya Gowda,47,2,0
+401,401,Radha Rao,75,2,0
+402,402,Shivakumar Shetty,52,1,0
+403,403,Nagaraj Rao,67,1,0
+404,404,Kiran Reddy,49,1,0
+405,405,Harish Rao,73,1,0
+406,406,ಕಾವ್ಯ,39,2,0
+407,407,Nandini Naik,49,2,0
+408,408,Shivakumar Rao,57,1,0
+409,409,ಲಕ್ಷ್ಮಿ,50,2,0
+410,410,ಕಾವ್ಯ,24,2,0
+411,411,Anand Achar,33,1,0
+412,412,Sunitha Achar,45,2,0
+413,413,ಶಿವಕುಮಾರ್,40,1,0
+414,414,Anand Rao,48,1,0
+415,415,Radha Naik,36,2,0
+416,416,ಪ್ರಕಾಶ್,69,1,0
+417,417,Roopa Naik,71,2,0
+418,418,Vijaya Reddy,48,2,0
+419,419,Shivakumar Murthy,70,1,0
+420,420,Harish Kumar,37,1,0
+421,421,Sunitha Achar,24,2,0
+422,422,Prakash Kumar,54,1,0
+423,423,ಸುರೇಶ್,59,1,0
+424,424,Ravi Shetty,43,1,0
+425,425,ಸುನೀತಾ,69,2,0
+426,426,Umesh Rao,24,1,0
+427,427,Kiran Hegde,70,1,0
+428,428,Mahesh Gowda,47,1,0
+429,429,Harish Gowda,49,1,0
+430,430,Vinod Rao,33,1,0
+431,431,Geetha Gowda,25,2,0
+432,432,Vijaya Reddy,68,2,0
+433,433,Pooja Reddy,38,2,0
+434,434,Kavya Rao,53,2,0
+435,435,Pooja Shetty,46,2,0
+436,436,ರಾಧಾ,49,2,0
+437,437,Kiran Naik,64,1,0
+438,438,Shivakumar Patil,67,1,0
+439,439,ಸುನೀತಾ,48,2,0
+440,440,Manjunath Gouda,45,1,0
+441,441,ಸವಿತಾ,56,2,0
+442,442,Vinod Bhat,29,1,0
+443,443,Vinod Shetty,56,1,0
+444,444,ರಾಧಾ,73,2,0
+445,445,Mahesh Naik,40,1,0
+446,446,Vinod Achar,40,1,0
+447,447,Anitha Gouda,40,2,0
+448,448,ರಮೇಶ್,62,1,0
+449,449,Basavaraj Reddy,50,1,0
+450,450,ಲಕ್ಷ್ಮಿ,72,2,0
+451,451,Santosh Hegde,30,1,0
+452,452,Sunitha Reddy,51,2,0
+453,453,ಗೀತಾ,75,2,0
+454,454,Manjunath Gouda,73,1,0
+455,455,ನಾಗರಾಜ್,45,1,0
+456,456,Mahesh Murthy,67,1,0
+457,457,Ramesh Patil,64,1,0
+458,458,Pooja Shetty,71,2,0
+459,459,ಮಂಜುನಾಥ್,38,1,0
+460,460,Vijaya Gowda,61,2,0
+461,461,Basavaraj Reddy,18,1,0
+462,462,Savitha Reddy,49,2,0
+463,463,ಕಾವ್ಯ,67,2,0
+464,464,Shobha Naik,71,2,0
+465,465,Kiran Gowda,51,1,0
+466,466,Vinod Murthy,74,1,0
+467,467,Lakshmi Achar,36,2,0
+468,468,Roopa Shetty,72,2,0
+469,469,Ravi Achar,73,1,0
+470,470,Girish Kumar,54,1,0
+471,471,Anitha Achar,27,2,0
+472,472,ಶಿವಕುಮಾರ್,46,1,0
+473,473,Umesh Bhat,34,1,0
+474,474,Prakash Shetty,48,1,0
+475,475,ಮಹೇಶ್,74,1,0
+476,476,Sunitha Shetty,48,2,0
+477,477,Santosh Reddy,56,1,0
+478,478,Manjunath Achar,24,1,0
+479,479,ಸುರೇಶ್,52,1,0
+480,480,Harish Rao,33,1,0
+481,481,Santosh Naik,53,1,0
+482,482,Kavya Rao,30,2,0
+483,483,Radha Bhat,75,2,0
+484,484,Kiran Murthy,54,1,0
+485,485,Lakshmi Kumar,49,2,0
+486,486,Girish Kumar,25,1,0
+487,487,Anitha Reddy,37,2,0
+488,488,Shobha Bhat,75,2,0
+489,489,ನಾಗರಾಜ್,73,1,0
+490,490,Roopa Kumar,20,2,0
+491,491,Ramesh Kumar,63,1,0
+492,492,ಸುರೇಶ್,25,1,0
+493,493,ಕಾವ್ಯ,53,2,0
+494,494,Vinod Kumar,67,1,0
+495,495,Shobha Patil,51,2,0
+496,496,ಮಂಜುನಾಥ್,30,1,0
+497,497,Roopa Shetty,23,2,0
+498,498,Prakash Naik,66,1,0
+499,499,ಮಹೇಶ್,75,1,0
+500,500,Ramesh Gowda,64,1,0

@@ -1,0 +1,6 @@
+RankID,RankName,Hierarchy,Active
+1,Constable,1,1
+2,Head Constable,2,1
+3,Sub-Inspector,3,1
+4,Inspector,4,1
+5,DSP,5,1

@@ -22,9 +22,10 @@ from graph_store import NetworkXGraphStore
 from build_graph import build, person_id, fir_id
 from extract import enrich
 from resolve import resolve
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
+# NOTE: sklearn/numpy/scipy REMOVED — that stack is ~290MB and Catalyst AppSail (a) does not
+# pip-install dependencies (libraries must be bundled with the app) and (b) caps disk at 256MB.
+# pure_tfidf implements the exact TF-IDF + cosine behaviour we used, with zero dependencies.
+from pure_tfidf import PureTfidf
 
 class SemanticIndex:
     """
@@ -43,19 +44,28 @@ class SemanticIndex:
         self.model = None; self.embeddings = None
         self.vec = None; self.matrix = None
         if use_embeddings:
-            try:
-                from sentence_transformers import SentenceTransformer
-                self.model = SentenceTransformer(model_name)
-                self.mode = "embeddings"
-            except Exception as e:
-                # model/network unavailable -> graceful fallback, pipeline never breaks
-                print(f"[SemanticIndex] embeddings unavailable ({type(e).__name__}); "
-                      f"falling back to TF-IDF. In production (open internet) this uses real embeddings.")
+            # Fail FAST if the model isn't locally available, instead of hanging on a network
+            # download timeout (~73s). Set a short connect timeout + offline-friendly behavior.
+            # To USE real embeddings in production: pre-download the model into the container image
+            # (e.g. RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('...')")
+            # so it's cached at build time, then set KAVERI_USE_EMBEDDINGS=1.
+            import os as _os
+            if _os.environ.get("KAVERI_USE_EMBEDDINGS", "0") != "1":
+                # default OFF for fast, predictable startup everywhere; opt-in in production
                 self.mode = "tfidf"
+            else:
+                try:
+                    _os.environ.setdefault("HF_HUB_DOWNLOAD_TIMEOUT", "10")
+                    from sentence_transformers import SentenceTransformer
+                    self.model = SentenceTransformer(model_name)
+                    self.mode = "embeddings"
+                except Exception as e:
+                    print(f"[SemanticIndex] embeddings unavailable ({type(e).__name__}); using TF-IDF.")
+                    self.mode = "tfidf"
         else:
             self.mode = "tfidf"
         if self.mode == "tfidf":
-            self.vec = TfidfVectorizer(stop_words="english", ngram_range=(1,2), min_df=1)
+            self.vec = PureTfidf()
 
     def build(self, id_text_pairs):
         self.ids = [i for i,_ in id_text_pairs]
@@ -63,17 +73,24 @@ class SemanticIndex:
         if self.mode == "embeddings":
             self.embeddings = self.model.encode(texts, convert_to_numpy=True, show_progress_bar=False)
         else:
-            self.matrix = self.vec.fit_transform(texts)
+            self.vec.fit_transform(texts)
 
     def query(self, text, k=5):
         if self.mode == "embeddings":
-            q = self.model.encode([text], convert_to_numpy=True, show_progress_bar=False)
-            sims = cosine_similarity(q, self.embeddings)[0]
+            # cosine over embedding vectors, pure-python (no numpy)
+            import math
+            q = self.model.encode([text], convert_to_numpy=False, show_progress_bar=False)[0]
+            def _cos(a, b):
+                dot = sum(x*y for x, y in zip(a, b))
+                na = math.sqrt(sum(x*x for x in a)); nb = math.sqrt(sum(y*y for y in b))
+                return dot/(na*nb) if na and nb else 0.0
+            sims = [(i, _cos(q, e)) for i, e in enumerate(self.embeddings)]
+            sims = [(i, s) for i, s in sims if s > 0]
+            sims.sort(key=lambda x: -x[1])
+            hits = sims[:k]
         else:
-            q = self.vec.transform([text])
-            sims = cosine_similarity(q, self.matrix)[0]
-        order = np.argsort(-sims)[:k]
-        return [(self.ids[i], float(sims[i])) for i in order if sims[i] > 0]
+            hits = self.vec.query(text, k=k)
+        return [(self.ids[i], float(s)) for i, s in hits]
 
 class Retriever:
     def __init__(self, store, graph, resolved_groups):

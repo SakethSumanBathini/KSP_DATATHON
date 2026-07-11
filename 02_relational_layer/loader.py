@@ -14,7 +14,9 @@ class RelationalStore:
         self.db_path = db_path
         self.csv_dir = csv_dir or os.path.join(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "01_data_generator")
-        self.conn = sqlite3.connect(self.db_path)
+        # check_same_thread=False: allow the built-once in-memory DB to serve web-server
+        # worker threads (read-only after build, so this is safe).
+        self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
         self.conn.execute("PRAGMA foreign_keys = ON")
 

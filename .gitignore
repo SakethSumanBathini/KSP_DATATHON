@@ -24,3 +24,13 @@ Thumbs.db
 node_modules/
 dist/
 build/
+
+# Vendored third-party libraries — recreate with:
+#   pip install --target=./vendor flask networkx jellyfish
+vendor/
+
+# Catalyst local config
+.catalystrc
+
+# temp
+temp_kaveri*/

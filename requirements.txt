@@ -1,9 +1,7 @@
-# KAVERI — Python dependencies (backend components 1-9)
-faker>=40.0.0
+# NOTE: Catalyst AppSail does NOT install these — they are bundled in ./vendor for deploy.
+# These are for LOCAL development only.
+flask>=3.0.0
 networkx>=3.0
 jellyfish>=1.0.0
-scikit-learn>=1.3.0
-# Production-only (not needed to run the verifiable stand-in pipeline):
-# neo4j>=5.0            # Component 3 production graph backend
-# ai4bharat-transliteration  # Component 5 production transliteration (IndicXlit)
-# qdrant-client        # Component 6 production vector store
+faker>=40.0.0          # only needed to REGENERATE data (01_data_generator), not at runtime
+# scikit-learn intentionally NOT used — replaced by 06_retrieval/pure_tfidf.py (290MB -> 0MB)

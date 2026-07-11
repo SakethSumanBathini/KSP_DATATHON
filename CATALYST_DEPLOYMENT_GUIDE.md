@@ -1,105 +1,115 @@
-# KAVERI — Catalyst Deployment & Validation Guide
+# Catalyst Deployment — What Actually Works (learned the hard way)
 
-## The big question: deploy now, or after the frontend?
+**LIVE:** https://kaveri-backend-50043711203.development.catalystappsail.in
 
-**Answer: deploy the BACKEND now (this week). Deploy the FRONTEND after your friend restyles it.**
-
-Reason: they're independent. The backend (components 1–9) is an API/service — your friend's
-frontend restyling can't affect it, and getting the backend deployed early de-risks the mandatory
-requirement. The frontend deploys separately (Catalyst Slate/Web Client Hosting) once it's styled.
-Doing backend-first means: if deployment hits snags (it will — container limits, timeouts), you find
-out with 3 weeks left, not 3 days. **Deployment is pass/fail for the whole submission — treat it as
-the critical path, not the last step.**
-
-Sequence:
-1. NOW → deploy backend to Catalyst, get the API live (this guide).
-2. TOMORROW → hand frontend to your friend; he restyles `10_frontend/kaveri_frontend.jsx`.
-3. LATER → point his styled frontend at the live backend API, deploy frontend to Slate.
-4. Record demo, write brief + deck.
+This guide records the **real** constraints of Catalyst AppSail (Catalyst-Managed Python runtime),
+discovered by deploying, failing, and diagnosing. If you're deploying a Python app on Catalyst,
+read this before you burn five deploy cycles like we did.
 
 ---
 
-## Gap closures — what's code (done) vs what's deployment (you do)
+## ⚠️ The three gotchas that break Python deploys on Catalyst
 
-All gap code is written with a PRODUCTION path + safe FALLBACK. Setting env vars + deploying
-flips each from fallback to production. No code changes needed.
+### 1. Catalyst does NOT run `pip install -r requirements.txt`
+This is the big one. AppSail **copies your files and runs your startup command — that's it.**
+No dependency installation happens. Your `requirements.txt` is ignored.
 
-| Gap | Code status | To activate in production |
-|-----|-------------|---------------------------|
-| 1 Neo4j | ✅ written (graph_store.py) | Run Neo4j container on AppSail; set NEO4J_URI/USER/PASSWORD; use Neo4jGraphStore() |
-| 2 Embeddings | ✅ written (retrieval.py) | Open internet auto-downloads multilingual model; optionally back with Qdrant |
-| 3 LLM | ✅ written (llm_interface.py) | Set CATALYST_LLM_ENDPOINT + CATALYST_LLM_TOKEN; narration goes live |
-| 4 Audit persist | ✅ written (trust.py) | Pass persist_fn writing to Catalyst NoSQL; add infra append-only |
-| 5 ER benchmark | ✅ CLOSED (hardened) | Nothing — done. Present with STATUS.md framing |
+**Symptom:** deploy says "Success", but the app has **0 running instances** and **no logs at all**.
+The URL returns `"Execution failed. Please check the startup command or port."` The app is dying on
+its very first `import flask` before it can log anything.
 
----
-
-## Step-by-step Catalyst deployment (backend)
-
-### 0. Prereqs
-- Claim Catalyst credits: https://catalyst.zoho.com/promotions.html?cn=KSPH26
-- Install Catalyst CLI, `catalyst login`.
-
-### 1. Neo4j container on AppSail (Gap 1)
-- Package Neo4j as a Docker image, deploy to Catalyst AppSail (custom OCI runtime).
-- Note the 30-second function/AppSail request timeout — Neo4j itself is fine (it's a service);
-  just ensure heavy graph BUILDS run as a Job (step 4), not in a request.
-- Set env vars in Catalyst console: NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD.
-- In build_graph.py, switch `NetworkXGraphStore()` → `Neo4jGraphStore()`.
-
-### 2. Data Store (relational) — Component 2
-- Create Catalyst Data Store tables matching schema.py.
-- Point the loader at Data Store instead of SQLite (the data-access API stays identical).
-
-### 3. Serve the LLM (Gap 3)
-- Use Catalyst QuickML to serve the model; copy the inference endpoint + token.
-- Set CATALYST_LLM_ENDPOINT + CATALYST_LLM_TOKEN. Narration goes live automatically.
-- Adjust the response-key parsing in CatalystLLMNarrator.narrate() to match your endpoint's JSON.
-
-### 4. Heavy pipeline as a Job (the timeout rule)
-- The full generate→load→graph→extract→resolve pipeline exceeds 30s. Run it as a Catalyst
-  Job (Job Scheduling, 15-min limit), triggered once to seed the graph. The API then serves
-  queries against the already-built graph (fast, under 30s).
-
-### 5. Orchestrator as the API (Component 7)
-- Deploy the orchestrator as an AppSail web app / Function behind API Gateway.
-- Each query (similar/network/identity/filter) returns in well under 30s against the built graph.
-
-### 6. Auth + RBAC (Component 8)
-- Wire Catalyst Authentication for login; map users to roles (station_officer, etc.).
-- Audit: pass persist_fn = write-to-Catalyst-NoSQL. (Gap 4)
-
-### 7. Embeddings (Gap 2)
-- On Catalyst (open internet), the multilingual model downloads on first run. For scale, stand up
-  Qdrant as a container and store vectors there (optional; in-process works for the demo).
-
----
-
-## How to RUN it (locally, before deploying)
+**Fix:** bundle your dependencies with the app.
 ```bash
-pip install -r requirements.txt
-cd 01_data_generator && python3 generate.py
-cd ../02_relational_layer && python3 loader.py
-cd ../03_graph_construction && python3 build_graph.py
-cd ../04_extraction && python3 extract.py
-cd ../05_entity_resolution && python3 resolve.py
-cd ../06_retrieval && python3 retrieval.py
-cd ../07_orchestrator && python3 orchestrator.py
-cd ../08_trust_layer && python3 trust.py
-cd ../09_burglary_playbook && python3 playbook.py
+pip install --target=./vendor flask networkx jellyfish
+```
+Then, at the very top of `main.py`, **before any third-party import**:
+```python
+import os, sys
+BASE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(BASE, "vendor"))   # MUST come first
+from flask import Flask                             # now this works
+```
+⚠️ Build the `vendor/` folder on **Linux x86-64 with the same Python minor version (3.12)** as the
+Catalyst runtime, or compiled extensions (`.so` files) won't load.
+
+### 2. Disk is capped (256 MB by default) — the sklearn stack does NOT fit
+`scikit-learn + numpy + scipy` = **~290 MB vendored**. Over the limit. It cannot be deployed.
+
+**Fix:** we removed scikit-learn entirely. `06_retrieval/pure_tfidf.py` reimplements
+`TfidfVectorizer(stop_words="english", ngram_range=(1,2), min_df=1)` + `cosine_similarity` in pure
+Python with zero dependencies — and reproduces sklearn's output (verified: identical similarity
+scores; ER still 1.000/1.000). **290 MB → 0 MB, no loss in results.**
+
+Final deploy size: **25 MB**.
+
+### 3. The startup command needs `python3`, and there is no shell
+Catalyst's Linux runtime has `python3`, not `python`. And AppSail executes the startup command
+**directly, with no shell**, so there's no PATH fallback.
+
+Correct `app-config.json`:
+```json
+{
+    "command": "python3 -u main.py",
+    "build_path": ".",
+    "stack": "python_3_12",
+    "env_variables": {},
+    "memory": 1024,
+    "scripts": {}
+}
+```
+The `-u` flag unbuffers output so Python errors actually reach the logs.
+
+---
+
+## Other things worth knowing
+- **Port:** Catalyst provides it via env var `X_ZOHO_CATALYST_LISTEN_PORT` (default 9000). Read it:
+  ```python
+  port = int(os.environ.get("X_ZOHO_CATALYST_LISTEN_PORT", 9000))
+  app.run(host="0.0.0.0", port=port)
+  ```
+- **App directory IS writable** (contrary to some doc phrasing) — but don't rely on it. We generate
+  the synthetic CSVs at **build time** and ship them, so startup is fast (~2s) and does no I/O.
+- **Console settings override `app-config.json`.** Check
+  *Serverless → AppSail → your app → Startup Command / App Execution Settings*.
+- **Build once at startup, not per request.** The graph build takes ~2s; do it at module load and
+  hold it in memory. Every HTTP request then queries the already-built graph.
+- **SQLite across threads:** a web server serves requests on worker threads, so an in-memory SQLite
+  connection built at startup needs `check_same_thread=False` or every request crashes.
+
+---
+
+## 🔍 The debugging trick that actually solved it
+When the deploy "succeeds" but there are no logs and no instances, deploy a **stdlib-only
+diagnostic** — an app with *zero* third-party imports, so it cannot fail to start. Have it report
+what the runtime actually has. It found the real bug in one shot after four wrong guesses.
+
+See `diagnostic_main.py` (kept in the repo for exactly this purpose). It reports: Python version,
+working directory, files present, whether the directory is writable, the port env var, and — the
+key part — **which dependencies are actually importable.**
+
+---
+
+## Deploy steps
+```bash
+# 1. Generate the data CSVs (shipped with the app; not generated at runtime)
+cd 01_data_generator && python generate.py && cd ..
+
+# 2. Vendor the dependencies (MUST be Linux x86-64, Python 3.12)
+pip install --target=./vendor flask networkx jellyfish
+
+# 3. Deploy
+catalyst deploy
 ```
 
-## How to VALIDATE it (the checks that matter)
-1. **ER score**: `cd 05_entity_resolution && python3 resolve.py` → expect PRECISION=1.000 RECALL=1.000,
-   and "Hard decoys wrongly merged: 0/5". If those hold, resolution is sound.
-2. **Security**: `cd 08_trust_layer && python3 trust.py` → expect RBAC hierarchy PASS, cross-jurisdiction
-   DENIED, tampering "detected", uncited claim "BLOCKED".
-3. **Full brief**: `cd 09_burglary_playbook && python3 playbook.py` → expect a complete Investigation
-   Brief with network, near-repeat, repeat offender, and cited FIRs.
-4. **Determinism**: run generate.py twice → CSVs identical (reproducible).
-5. **No secrets**: `grep -rniE "password|token|secret.*=.*['\"]" --include="*.py" .` → only env-var refs.
+## Verify the live deployment
+- `/` → `{"status": "live", "cases_loaded": 500, "resolved_identity_groups": 5}`
+- `/investigate/1` → full cited brief: network `[2,3,4,5,7,10,13]`, 13 near-repeat burglaries, 3 leads
+- `/identity/17` → Kannada variants resolved: ರಾಮಯ್ಯ.ಕೆ / Ramaiah K / ರಾಮು
+- `POST /query` → `{"query":"show the network for this case","case_id":1}`
 
-## How to CHECK before pushing to GitHub
-- `.gitignore` is in place (no __pycache__, no .env, no secrets).
-- Confirm no real credentials anywhere: the repo should have ZERO tokens/keys.
-- README.md + this guide + each component's README/STATUS are present.
+## Still to do (production upgrades)
+- **Neo4j** as a separate AppSail container (Cypher already written in `graph_store.py`)
+- **Catalyst QuickML** served LLM (set `CATALYST_LLM_ENDPOINT` / `CATALYST_LLM_TOKEN`)
+- **Catalyst Data Store** to replace SQLite; **Catalyst NoSQL** for durable audit
+- **Frontend** on Catalyst Slate, wired to this API
+- Flask's dev server is used; for real traffic bundle `waitress` into `vendor/` and serve with it.

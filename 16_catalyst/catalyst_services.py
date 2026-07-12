@@ -59,7 +59,7 @@ BACKEND_LOG = {}
 _TOKEN_CACHE = {"access_token": None, "expires_at": 0}
 
 
-def _get_access_token(timeout=8):
+def _get_access_token(timeout=15):
     """
     Exchange the long-lived REFRESH token for a short-lived ACCESS token, cached ~55 min.
     The refresh token is the only durable secret; it never leaves the environment. Returns the
@@ -88,7 +88,12 @@ def _get_access_token(timeout=8):
     return access
 
 
-def _post(path, body, timeout=8):
+def _post(path, body, timeout=30):
+    # WHY 30s AND NOT 8s: found in production. On a COLD AppSail container the first request
+    # must fetch an OAuth token AND run GLM inference on a full briefing. That exceeded the old
+    # 8-second budget, the call raised, and we silently fell through to the template — so the
+    # FIRST thing anyone saw after an idle period was the fallback, not the LLM. Every
+    # subsequent (warm) request worked, which is exactly why this hid for so long.
     """
     Generic Catalyst BAAS POST — used by the NOT-YET-WIRED adapters (Zia voice, NoSQL audit,
     Catalyst Auth). These remain OFF for now: without an access token the call raises and each
@@ -300,10 +305,60 @@ class GroundedNarrator:
         return True, None
 
     def _template(self, facts, citations, language):
+        """
+        THE SAFETY NET. This runs when GLM is disabled, times out, or is CAUGHT LYING.
+
+        It shipped as a debug placeholder — `" ".join(f"{k}: {v}" ...)` — which dumped the raw
+        facts dict at the officer, internal keys and all, INCLUDING `_note_on_near_repeat`, a
+        private instruction meant only for the language model. It was found in production on a
+        cold container, where the first request after idle timed out the GLM call and fell
+        through to this. The very first thing anyone saw was a Python dict.
+
+        That is not acceptable for the path we rely on when the LLM fails. The whole argument of
+        this system is "if the model lies, the officer still gets the truth" — so the truth has
+        to be READABLE. A deterministic briefing is the product, not a stack trace.
+
+        Everything below is assembled from verified facts. No model is involved. It cannot
+        hallucinate, because it cannot generate.
+        """
         if self.fallback:
             return self.fallback(facts, citations, language)
-        parts = [f"{k}: {v}" for k, v in facts.items() if v not in (None, [], {})]
-        return " ".join(parts) + f"  [Sources: FIR {citations}]"
+
+        L = []
+        cid = facts.get("case_id")
+        if cid is not None:
+            L.append(f"CASE {cid}")
+
+        secs = facts.get("sections") or []
+        if secs:
+            L.append("OFFENCES: " + "; ".join(str(s) for s in secs))
+
+        accused = facts.get("accused") or []
+        if accused:
+            L.append("ACCUSED: " + ", ".join(str(a) for a in accused))
+
+        linked = facts.get("linked_cases") or []
+        phones = facts.get("shared_phones") or []
+        if linked:
+            net = f"NETWORK: Linked to {len(linked)} other case(s) — FIR {', '.join(map(str, linked))}."
+            if phones:
+                net += f" Connected through shared phone(s): {', '.join(phones)}."
+            L.append(net)
+        elif phones:
+            L.append(f"NETWORK: Shared phone(s): {', '.join(phones)}.")
+
+        leads = facts.get("recommended_leads") or []
+        if leads:
+            L.append("RECOMMENDED LEADS:")
+            for i, lead in enumerate(leads, 1):
+                L.append(f"{i}. {lead}")
+
+        if citations:
+            L.append("[Sources: FIR " + ", ".join(str(c) for c in citations) + "]")
+
+        # NOTE what is deliberately NOT here: any key beginning with "_". Those are internal
+        # instructions to the model (e.g. _note_on_near_repeat) and must never reach an officer.
+        return "\n".join(L) if L else "No findings for this case."
 
 
 # ═══════════════════════════════════════════════════════════════════════════

@@ -705,10 +705,20 @@ def converse():
     sess.role = role
     ctx, clarification, provenance = sess.resolve_query(q)
 
+    # Surface WHY routing went the way it did. When the LLM router silently pointed at the wrong
+    # Catalyst endpoint, every question fell back to keywords and nothing anywhere said so.
+    # NO bare `except: pass` here. Three separate bugs today hid behind a swallowed exception —
+    # including the LLM router calling the wrong Catalyst endpoint on EVERY request while
+    # appearing, from the outside, to simply be choosing not to route. If this line can fail, we
+    # want to know loudly, not degrade quietly.
+    import conversation as _conv
+    ctx["route_debug"] = getattr(_conv, "LAST_ROUTE_REASON", None)
+
     if clarification:
         sess.log(q, ctx, clarification)
         return jsonify({"session_id": sid, "language": ctx["language"], "intent": ctx["intent"],
                         "clarification_needed": clarification, "context_used": provenance,
+                        "routed_by": ctx.get("route_debug"),
                         "note": "KAVERI asks rather than guessing which person/case is meant."})
 
     answer, cites, learned = _answer_for(ctx, role)
@@ -725,6 +735,7 @@ def converse():
     return jsonify({"session_id": sid, "language": ctx["language"], "intent": ctx["intent"],
                     "case_id": ctx.get("case_id"), "person_id": ctx.get("person_id"),
                     "answer": answer, "citations": cites, "context_used": provenance,
+                    "routed_by": ctx.get("route_debug"),
                     "turns_in_session": len(sess.turns)})
 
 

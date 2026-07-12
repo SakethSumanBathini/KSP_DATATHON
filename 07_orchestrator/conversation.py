@@ -17,6 +17,8 @@ Query text may be Kannada, English, or code-mixed (which is how officers actuall
 import re
 
 # ---- intent keywords, English + Kannada ----
+LAST_ROUTE_REASON = None   # why the LLM router did/didn't fire — surfaced, never swallowed
+
 INTENT_KEYWORDS = {
     "network": {
         "en": ["network", "linked", "connected", "connection", "gang", "associates", "who else"],
@@ -119,18 +121,26 @@ def classify_intent(text):
         for kw in langs["kn"]:
             if kw in text:
                 return intent, kw, lang
-    # keywords missed -> ask the LLM to route it (see docstring). Falls back safely.
+    # Keywords missed -> ask the LLM to route it.
+    #
+    # NOTE THE ABSENCE OF `except: pass`. The first version of this swallowed every exception,
+    # so when the router called the WRONG Catalyst endpoint it failed silently on every request
+    # and simply looked like "the model chose not to route this". A silent except is a bug you
+    # cannot find. Failures are now surfaced in LAST_ROUTE_REASON and reported in the API
+    # response, so a broken router announces itself instead of quietly degrading.
+    global LAST_ROUTE_REASON
     try:
         import os as _os, sys as _sys
         _sys.path.insert(0, _os.path.join(
             _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))), "16_catalyst"))
         from catalyst_services import route_intent_llm
-        lang = "kn" if any("\u0c80" <= ch <= "\u0cff" for ch in text) else "en"
+        _lang = "kn" if any("\u0c80" <= ch <= "\u0cff" for ch in text) else "en"
         intent, how = route_intent_llm(text, set(INTENT_KEYWORDS.keys()))
+        LAST_ROUTE_REASON = how
         if intent:
-            return intent, f"llm:{how}", lang
-    except Exception:
-        pass          # LLM unavailable -> keep the deterministic answer below
+            return intent, f"glm_router", _lang
+    except Exception as e:
+        LAST_ROUTE_REASON = f"router_exception:{type(e).__name__}:{str(e)[:60]}"
 
     return "unknown", None, lang
 

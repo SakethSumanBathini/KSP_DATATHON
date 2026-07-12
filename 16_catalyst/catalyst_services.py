@@ -240,26 +240,30 @@ def route_intent_llm(text, known_intents, timeout=12):
         "If the question does not fit ANY capability, answer NONE."
     )
     try:
-        out = _post("", {
-            "model": LLM_MODEL,
-            "messages": [{"role": "system", "content": system},
-                         {"role": "user", "content": text}],
-            "max_tokens": 12,
-            "temperature": 0.0,
-            "chat_template_kwargs": {"enable_thinking": False},
-        }, timeout=timeout)
-        raw = (out.get("response") or "").strip()
-        if not raw and out.get("choices"):
-            raw = (out["choices"][0].get("message", {}).get("content") or "").strip()
-        raw = _strip_reasoning(raw)
+        # BUG THAT SHIPPED HERE, AND HOW IT HID:
+        #   The first version of this called _post("", {...}). That was copied from a pattern I
+        #   ASSUMED narrate() used, without checking. _post() targets the BAAS service
+        #   (https://api.catalyst.zoho.in/baas/v1/...) — GLM lives somewhere else entirely
+        #   (LLM_ENDPOINT, the QuickML chat URL). Every routing call hit the wrong service and
+        #   raised. And because the caller wrapped it in a bare `except: pass`, the error was
+        #   SWALLOWED — the router simply never worked, silently, and every question fell back to
+        #   the keyword table. It looked exactly like "the LLM decided not to route it".
+        #
+        #   A silent except is a bug you cannot find. The fix is both: call the RIGHT function,
+        #   and let failures be reportable (we return a reason string instead of hiding it).
+        raw = _glm_chat(
+            [{"role": "system", "content": system},
+             {"role": "user",   "content": text}],
+            max_tokens=16, temperature=0.0, timeout=timeout)
+        raw = _strip_reasoning(raw or "")
         # CONSTRAINED: the answer must be one of OUR intents. Anything else is discarded.
         token = raw.strip().strip(".").strip().lower().split()[0] if raw.strip() else ""
         if token in known_intents:
             BACKEND_LOG["routing"] = "catalyst_glm"
-            return token, "llm"
-        return None, f"llm_returned_unknown:{token[:24]}"
+            return token, "glm"
+        return None, f"llm_returned:{token[:24] or 'empty'}"
     except Exception as e:
-        return None, f"llm_error:{type(e).__name__}"
+        return None, f"llm_error:{type(e).__name__}:{str(e)[:40]}"
 
 
 class GroundedNarrator:

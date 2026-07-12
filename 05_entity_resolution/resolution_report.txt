@@ -1,0 +1,18 @@
+=== COMPONENT 5: KANNADA ENTITY RESOLUTION (final) ===
+Candidate pairs (blocked): 22869
+Merges: 30 | Reviews: 13053 | Co-offender relations: 8
+Resolved identity groups: 5
+
+=== HONEST SCORE vs GROUND TRUTH (30 true same-person pairs) ===
+  TP=30  FP(false merges)=0  FN(missed)=0
+  PRECISION=1.000  RECALL=1.000  F1=1.000
+
+  Per true-identity-group recovery:
+    CLUSTERA_PERSON_0: 10/10 pairs  (Ramesh Gowda)
+    CLUSTERA_PERSON_1: 10/10 pairs  (Suresh Naik)
+    CLUSTERA_PERSON_2: 6/6 pairs  (ಮಂಜುನಾಥ್)
+    SETB_PERSON_PRAKASH: 1/1 pairs  (Prakash Reddy)
+    TRUE_PERSON_RAMAIAH: 3/3 pairs  (['ರಾಮಯ್ಯ.ಕೆ', 'Ramaiah K', 'ರಾಮು'])
+
+  KANNADA VARIANT DEMO CASE (17,18,19):
+    resolved group containing variant: [17, 18, 19]

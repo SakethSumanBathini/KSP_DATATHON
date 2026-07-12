@@ -1,0 +1,42 @@
+===========================================================================
+QUERY: Show me cases with a similar modus operandi to night-time ground floor burglary with glass breaking
+[intent: similar_cases]
+Found 5 cases with a similar modus operandi:
+  • FIR 9 (similarity 0.339): On the night of 25-03-2026, unknown persons broke into a ground-floor residence by breaking the rear window glass while…
+  • FIR 7 (similarity 0.331): On the night of 19-03-2026, unknown persons broke into a ground-floor residence by breaking the rear window glass while…
+  • FIR 13 (similarity 0.33): On the night of 06-04-2026, unknown persons broke into a ground-floor residence by breaking the rear window glass while…
+  • FIR 11 (similarity 0.329): On the night of 31-03-2026, unknown persons broke into a ground-floor residence by breaking the rear window glass while…
+  • FIR 12 (similarity 0.324): On the night of 03-04-2026, unknown persons broke into a ground-floor residence by breaking the rear window glass while…
+
+These share operational characteristics and may involve related offenders. Each is cited above for verification.
+CITATIONS: [7, 9, 11, 12, 13]
+
+===========================================================================
+QUERY: Show the criminal network connected to this case
+[intent: network]
+Analysis of FIR 1:
+This case is connected to 7 other FIRs through shared physical evidence: FIR 2, FIR 3, FIR 4, FIR 5, FIR 7, FIR 10, FIR 13.
+Shared phone number(s): +916513911270, +919333883801 — appearing across multiple cases.
+Accused 'Ramesh Gowda' (resolved identity Identity:0).
+
+All connections above are drawn from recorded FIR data and are cited. A human officer should verify before action.
+CITATIONS: [1, 2, 3, 4, 5, 7, 10, 13]
+
+===========================================================================
+QUERY: What is the prior history of this individual across cases
+[intent: identity_history]
+Identity history needs a specific person: click a person/case or name the individual. A contextless history query cannot identify whom to look up.
+CITATIONS: []
+
+===========================================================================
+QUERY: How many burglaries in Mysuru
+[intent: filter]
+Found 20 burglary cases in Mysuru: FIR 1, FIR 2, FIR 3, FIR 4, FIR 5, FIR 6, FIR 7, FIR 8, FIR 9, FIR 10, FIR 11, FIR 12, FIR 13, FIR 14, FIR 33 …
+CITATIONS: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 33, 37, 54, 80, 89, 101]
+
+===========================================================================
+AUDIT LOG (every query recorded):
+  2026-07-06T10:21:23 | officer_01 (station_officer) | intent=similar_cases | cases=5
+  2026-07-06T10:21:23 | officer_01 (station_officer) | intent=network | cases=8
+  2026-07-06T10:21:23 | officer_01 (station_officer) | intent=identity_history | cases=0
+  2026-07-06T10:21:23 | officer_01 (station_officer) | intent=filter | cases=20

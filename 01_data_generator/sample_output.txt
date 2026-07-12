@@ -1,0 +1,24 @@
+KSP SYNTHETIC FIR DATASET — SAMPLE OUTPUT (Component 1 verification artifact)
+===========================================================================
+Seed: 20260706  |  Total FIRs: 500
+
+--- SET A: Mysuru burglary cluster — first shared-phone FIR (full BriefFacts) ---
+CaseMasterID 1 | CrimeNo 100026105202600001 | Station 6105 | (12.317482,76.657391)
+BriefFacts: On the night of 01-03-2026, unknown persons broke into a ground-floor residence by breaking the rear window glass while the occupants were away. Gold ornaments and cash were stolen. Suspect identified as Ramesh Gowda. The accused was traced to mobile number +916513911270. Investigation continuing under night house-breaking provisions.
+
+--- SET B: cross-district shared vehicle — both FIRs ---
+CaseMasterID 15 | Station 6002
+BriefFacts: A robbery was reported near a commercial complex. Witnesses noted a white car bearing registration KA-01-XY-9053 leaving the scene at speed. Suspect described matching Prakash Reddy. CCTV footage under examination.
+
+CaseMasterID 16 | Station 6203
+BriefFacts: A house-breaking was reported. A vehicle seen in the vicinity carried the number KA-01-XY-9053. The same individual, Prakash Reddy, was named by a local informant. Case under investigation.
+
+--- SET C: Kannada variant identity — all 3 FIRs (same real person) ---
+CaseMasterID 17 | Station 6005
+BriefFacts: An accused person recorded in station papers as 'ರಾಮಯ್ಯ.ಕೆ' was named in connection with a house theft. The individual, aged about 34, is reported to operate across localities. Identity verification pending.
+
+CaseMasterID 18 | Station 6103
+BriefFacts: An accused person recorded in station papers as 'Ramaiah K' was named in connection with a house theft. The individual, aged about 34, is reported to operate across localities. Identity verification pending.
+
+CaseMasterID 19 | Station 6303
+BriefFacts: An accused person recorded in station papers as 'ರಾಮು' was named in connection with a house theft. The individual, aged about 34, is reported to operate across localities. Identity verification pending.

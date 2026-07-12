@@ -1,0 +1,11 @@
+=== COMPONENT 4: ENTITY EXTRACTION ===
+Entity nodes/edges created:
+  phone: 259 extractions
+  vehicle: 129 extractions
+  upi: 82 extractions
+Graph now has Phone=242 Vehicle=126 FinancialAccount=41 unique nodes
+
+=== HIT-RATE vs GROUND TRUTH (honest, incl. misses) ===
+  phone: 259/259 found (100.0%)  misses: 0
+  upi: 2/2 found (100.0%)  misses: 0
+  vehicle: 129/129 found (100.0%)  misses: 0

@@ -1,0 +1,42 @@
+COMPONENT 2 — RELATIONAL LAYER — VERIFICATION ARTIFACT
+======================================================================
+Contract checks (CSV columns vs expected interface): all passed
+Foreign-key integrity across all tables: PASS (no violations)
+Total rows loaded: 3085
+
+Rows per table:
+  State: 1
+  District: 5
+  UnitType: 3
+  Unit: 20
+  CaseCategory: 4
+  GravityOffence: 2
+  CrimeHead: 3
+  CrimeSubHead: 5
+  CaseStatusMaster: 4
+  ReligionMaster: 5
+  CasteMaster: 5
+  OccupationMaster: 8
+  Rank: 5
+  Designation: 3
+  Court: 5
+  Employee: 40
+  Act: 2
+  Section: 11
+  CaseMaster: 500
+  Accused: 635
+  Victim: 500
+  ComplainantDetails: 500
+  ArrestSurrender: 174
+  ActSectionAssociation: 645
+
+--- SAMPLE JOINED QUERY: FIR + accused + act-sections (Case 1) ---
+CrimeNo 100026105202600001 | Vijayanagar Mysuru PS (Mysuru)
+  Accused [A1] Ramesh Gowda age 34 (ID 1)
+  Section BNS 331 — House-trespass / house-breaking
+  Section BNS 305 — Theft in dwelling house / house-breaking related theft
+
+Data-access API methods available to components 3 & 4:
+  get_all_cases, get_case, get_accused_for_case, get_victims_for_case,
+  get_complainants_for_case, get_sections_for_case, get_arrests_for_accused,
+  get_station, get_district_for_case, all_accused

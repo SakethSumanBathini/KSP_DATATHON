@@ -33,6 +33,7 @@ def check(name, cond, detail=""):
     print(f"  {'PASS' if cond else 'FAIL'}  {name}" + (f"   [{detail}]" if detail and not cond else ""))
 
 
+
 def main():
     from loader import RelationalStore
     from graph_store import NetworkXGraphStore
@@ -274,6 +275,56 @@ def main():
           name_similarity("ರಾಮಚಂದ್ರ", "Ramachandra") > 0.75)
     check("cross-script identity now scores high enough to merge with evidence",
           name_similarity("ವೆಂಕಟೇಶ್", "Venkatesh") > 0.75)
+
+    print("\n--- NEW: hallucination guard catches INFLATED COUNTS (caught in production) ---")
+    # GLM wrote in PRODUCTION: "Ramesh Gowda is linked to 13 burglary cases (IDs: 2,3,4,5,7,10,13)"
+    # Seven IDs, reported as thirteen. The "13" was the NEAR-REPEAT cluster size — burglaries in
+    # the AREA, not cases linked to that man. Every individual ID was legitimate, so the old
+    # ID-only guard passed it. The sentence nearly DOUBLED an accused man's criminal footprint.
+    # That is the exact harm this system exists to prevent, so the guard now checks CLAIMS too.
+    import sys as _s, os as _o
+    _s.path.insert(0, _o.path.join(BASE, "16_catalyst"))
+    from catalyst_services import GroundedNarrator as _GN
+    _f = {"case_id": 1, "linked_cases": [2,3,4,5,7,10,13], "linked_case_count": 7}
+    _c = [2,3,4,5,6,7,8,9,10,11,12,13,14]
+    _ok, _ = _GN._hallucination_guard(
+        "Ramesh Gowda is linked to 13 burglary cases (IDs: 2, 3, 4, 5, 7, 10, 13).", _f, _c)
+    check("guard REJECTS an inflated linkage count (the real production hallucination)", not _ok)
+    _ok2, _ = _GN._hallucination_guard(
+        "Ramesh Gowda is linked to 7 burglary cases (IDs: 2, 3, 4, 5, 7, 10, 13).", _f, _c)
+    check("guard ALLOWS the correct linkage count (does not over-reject)", _ok2)
+    _ok3, _ = _GN._hallucination_guard(
+        "A near-repeat pattern shows 13 burglaries within 400m over 42 days.", _f, _c)
+    check("guard does NOT flag the near-repeat area statistic (no linkage claim)", _ok3)
+    _ok4, _ = _GN._hallucination_guard("FIR 1 is linked to FIR 999.", _f, _c)
+    check("guard still REJECTS an invented FIR number (original guard intact)", not _ok4)
+
+    print("\n--- NEW: name matcher surname discipline (audit weakness #4, now CLOSED) ---")
+    # THE ORIGINAL BUG: only the FIRST token was compared, so "Prakash Reddy" and "Prakash Rao"
+    # (two different men) scored 1.000 and were eligible to merge. A false merge brands an
+    # innocent man a habitual offender. Fixed: given name and surname scored separately, min().
+    check("surname mismatch does NOT merge ('Prakash Reddy' vs 'Prakash Rao', was 1.000)",
+          name_similarity("Prakash Reddy", "Prakash Rao") < 0.80)
+    # THE REGRESSION WE CAUGHT while fixing it: a 50/50 average let a MATCHING surname rescue a
+    # MISMATCHED given name — "Ramesh Kumar" vs "Suresh Kumar" hit 0.889 and would have merged.
+    check("matching surname does NOT rescue a mismatched given name ('Ramesh Kumar' vs 'Suresh Kumar')",
+          name_similarity("Ramesh Kumar", "Suresh Kumar") < 0.80)
+    check("different surname does not merge ('Ramesh Gowda' vs 'Ramesh Shetty')",
+          name_similarity("Ramesh Gowda", "Ramesh Shetty") < 0.80)
+    # RECALL MUST NOT BE SACRIFICED. An over-strict matcher misses real repeat offenders — we
+    # tried a suffix-sensitive metric and it lost 'Ramayya' <-> 'Ramu' (a man and his nickname).
+    check("identical names still merge", name_similarity("Ramesh Gowda", "Ramesh Gowda") >= 0.80)
+    check("spelling variant still merges ('Gowda' vs 'Gouda')",
+          name_similarity("Ramesh Gowda", "Ramesh Gouda") >= 0.80)
+    check("added middle name still merges ('Ramesh Gowda' vs 'Ramesh Kumar Gowda')",
+          name_similarity("Ramesh Gowda", "Ramesh Kumar Gowda") >= 0.80)
+
+    print("\n--- NEW: adversarial held-out ER (the 'graded your own homework' defence) ---")
+    from adversarial_benchmark import run_system_level
+    _safe, _res = run_system_level()
+    check("system makes ZERO unsafe decisions on held-out adversarial pairs", _safe == len(_res))
+    check("no different-people pair is ever AUTO-MERGED (only review/relate/no)",
+          all(r[4] != "merge" for r in _res if not r[2]))
 
     store.close()
     print("\n" + "=" * 66)

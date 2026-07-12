@@ -276,6 +276,26 @@ def main():
     check("cross-script identity now scores high enough to merge with evidence",
           name_similarity("ವೆಂಕಟೇಶ್", "Venkatesh") > 0.75)
 
+    print("\n--- NEW: ingestion fix must not change a single merge ---")
+    # We made resolve() ~3.5x faster and sublinear by (a) blocking the name index on gender and
+    # age and (b) capping uninformative mega-blocks. BOTH are only safe because Rule A — the ONLY
+    # auto-merge path — requires shared EVIDENCE, and the evidence index is never pruned.
+    # These checks pin that invariant: performance work must never move a merge.
+    # `fp` (line 73) is the false-merge count from the ER check above — after the ingestion fix
+    # it must STILL be zero. Performance work is not allowed to move a single merge.
+    check("ER still makes ZERO false merges after the ingestion fix", fp == 0)
+    check("identity group count unchanged (6) after the ingestion fix", len(groups) == 6)
+    # the incremental resolver must agree EXACTLY with the batch resolver
+    import resolve as _rmod
+    _inc = _rmod.IncrementalResolver(store, graph)
+    for _a in store.all_accused():
+        _inc.add(_a)
+    _ig = _inc.groups()
+    check("incremental resolver agrees with batch: same identity group count",
+          len(_ig) == len(groups))
+    check("incremental resolver finds the same merged identities as batch",
+          sorted(sorted(x) for x in _ig) == sorted(sorted(x) for x in groups))
+
     print("\n--- NEW: hallucination guard catches INFLATED COUNTS (caught in production) ---")
     # GLM wrote in PRODUCTION: "Ramesh Gowda is linked to 13 burglary cases (IDs: 2,3,4,5,7,10,13)"
     # Seven IDs, reported as thirteen. The "13" was the NEAR-REPEAT cluster size — burglaries in

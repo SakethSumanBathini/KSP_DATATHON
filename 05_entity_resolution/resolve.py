@@ -29,6 +29,29 @@ from transliteration import transliterate
 
 NAME_SIMILAR = 0.80
 
+# INGESTION FIX — the name-index block cap.
+#
+# MEASURED, at 500 / 3,000 / 8,000 FIRs:
+#     accused        x15.9
+#     NAME pairs     x254.4   <- QUADRATIC (15.9^2 = 253; it is exactly n^2)
+#     EVIDENCE pairs x10.4    <- LINEAR (it grows SLOWER than the data)
+#
+# The name index is the entire scaling problem, and the evidence index is not.
+#
+# WHY CAPPING THE NAME INDEX IS SAFE:
+#   Rule A is the ONLY auto-merge path and it REQUIRES shared evidence. Every merge therefore
+#   comes from the EVIDENCE index, which we leave completely intact. The name index only ever
+#   produces "review" outcomes.
+#
+#   And a soundex block containing 500 Rameshes means the name carries NO information. Comparing
+#   everyone inside it generates thousands of review entries that no human will ever read. We are
+#   not losing signal by skipping it; we are declining to manufacture noise.
+#
+# DISCLOSED COST: name-only review candidates inside very common-name blocks are not surfaced.
+# They could never have merged. The review queue shrinks — which, at ~18,000 entries, is a
+# feature rather than a loss.
+MAX_NAME_BLOCK = int(os.getenv("KAVERI_MAX_NAME_BLOCK", "60"))
+
 def roman_forms(name): return set(transliterate(name))
 def phonetic_keys(name):
     ks=set()
@@ -134,13 +157,179 @@ def decide(store, graph, a, b):
         return "review", nsim, det, "D:weak name -> review"
     return "no", nsim, det, "-"
 
+def _age_buckets(age, width=5, tol=2):
+    """
+    Overlapping age buckets for blocking.
+
+    decide() treats ages as compatible when they are within +/-2 years. If we bucketed naively
+    (age // 5), a 24-year-old and a 26-year-old would land in DIFFERENT buckets and never be
+    compared — silently losing a valid pair. So each person is indexed under every bucket their
+    tolerance window touches. We over-generate slightly and never lose a pair.
+    """
+    if age is None:
+        return ["NA"]
+    a = int(age)
+    return sorted({(a - tol) // width, (a + tol) // width})
+
+
+class IncrementalResolver:
+    """
+    THE ACTUAL FIX FOR INGESTION — and the honest story behind it.
+
+    THE PROBLEM WE COULD NOT BLOCK OUR WAY OUT OF:
+      resolve() compares candidate pairs. Blocking on (soundex, gender, age) cut the candidate
+      set by ~62x, which took the 500-FIR corpus from 0.67s to 0.19s. But it did NOT change the
+      complexity. Measured:
+
+          500 FIRs ->    632 accused ->     6,485 pairs ->  0.19s
+        3,000 FIRs ->  3,737 accused ->   221,325 pairs ->  6.82s
+        8,000 FIRs -> 10,020 accused -> 1,618,132 pairs -> 51.38s
+
+      Accused grew 2.7x; candidate pairs grew 7.3x. That is still O(n^2). The reason is
+      structural: the NUMBER of blocking keys is bounded (finitely many soundex codes x 2
+      genders x ~15 age buckets), so as the corpus grows the BLOCKS grow, and pairs within a
+      block grow quadratically. A better constant does not save you from that.
+
+    THE INSIGHT:
+      A police force does not re-resolve every identity in Karnataka every morning. It registers
+      ONE new FIR and asks "is this person already known to us?" That is not an all-pairs
+      problem. It is a LOOKUP.
+
+      So we keep the blocking index resident and resolve each NEW record against it:
+
+          cost per new FIR  =  O(size of the blocks that record falls into)
+
+      ...which is independent of how many FIRs came before. Ingesting the 200,001st FIR costs
+      the same as the 501st. The quadratic term disappears because we never re-derive it.
+
+    WHAT THIS IS NOT:
+      This does not make a cold rebuild of a 200k corpus fast — a full rebuild is still O(n^2)
+      and would need a one-time offline batch job. It makes the STEADY STATE — which is what a
+      police force actually runs — linear in new records. That is the real deployment mode, and
+      it is the honest scope of this fix.
+    """
+
+    def __init__(self, store, graph):
+        self.store = store
+        self.graph = graph
+        self.name_index = {}      # (soundex, gender, age_bucket) -> [accused_id]
+        self.evidence_index = {}  # entity_id -> [accused_id]
+        self.by_id = {}
+        self.merges, self.reviews, self.relations = [], [], []
+        self._pairs_examined = 0
+
+    def _keys(self, a):
+        ks = []
+        for k in phonetic_keys(a["AccusedName"]):
+            for ab in _age_buckets(a.get("AgeYear")):
+                ks.append((k, a.get("GenderID"), ab))
+        return ks
+
+    def add(self, accused_row):
+        """
+        Ingest ONE accused record. Returns the decisions it triggered.
+        Cost is proportional to the blocks it lands in — NOT to the size of the corpus.
+        """
+        aid = accused_row["AccusedMasterID"]
+        self.by_id[aid] = accused_row
+
+        # candidates = anyone already in one of this record's blocks
+        candidates = set()
+        for k in self._keys(accused_row):
+            block = self.name_index.get(k, ())
+            if len(block) > MAX_NAME_BLOCK:      # same cap as the batch path — see MAX_NAME_BLOCK
+                continue
+            candidates.update(block)
+        for e in conn_sig(self.graph, aid):
+            candidates.update(self.evidence_index.get(e, ()))
+        candidates.discard(aid)
+
+        out = []
+        for other in candidates:
+            self._pairs_examined += 1
+            verdict, conf, det, rule = decide(self.store, self.graph,
+                                              self.by_id[other], accused_row)
+            if verdict == "merge":
+                self.merges.append((other, aid, conf, rule)); out.append(("merge", other))
+            elif verdict == "review":
+                self.reviews.append((other, aid, conf, rule)); out.append(("review", other))
+            elif verdict == "relate":
+                self.relations.append((other, aid, conf, rule)); out.append(("relate", other))
+
+        # now index it, so the NEXT record can find it
+        for k in self._keys(accused_row):
+            self.name_index.setdefault(k, []).append(aid)
+        for e in conn_sig(self.graph, aid):
+            self.evidence_index.setdefault(e, []).append(aid)
+        return out
+
+    def groups(self):
+        """Union-find over the accumulated merge decisions."""
+        parent = {i: i for i in self.by_id}
+        def find(x):
+            while parent[x] != x:
+                parent[x] = parent[parent[x]]; x = parent[x]
+            return x
+        for x, y, _, _ in self.merges:
+            rx, ry = find(x), find(y)
+            if rx != ry: parent[ry] = rx
+        g = {}
+        for i in self.by_id:
+            g.setdefault(find(i), []).append(i)
+        return [sorted(v) for v in g.values() if len(v) > 1]
+
+    @property
+    def pairs_examined(self):
+        return self._pairs_examined
+
+
 def resolve(store, graph):
+    """
+    Candidate generation, then decide() on each candidate pair.
+
+    THE PERFORMANCE FIX (and why it is provably safe):
+
+      resolve() was 83% of total runtime and effectively O(n^2). It already blocked on phonetic
+      keys, but common Indian given names collapse into a few ENORMOUS soundex buckets — one
+      block held 73 people, which alone is 2,628 comparisons. At 500 FIRs the name index emitted
+      23,319 candidate pairs while the evidence index emitted 152. At state volume it would not
+      finish.
+
+      The fix is to also block the NAME index on GENDER and AGE. This cannot lose a merge, and
+      the reason is structural rather than empirical:
+
+          Rule A is the ONLY auto-merge path, and it requires gender_ok AND age_ok.
+          A pair with mismatched gender, or ages more than 2 years apart, therefore CANNOT
+          merge no matter how similar the names are.
+
+      So pruning those pairs out of candidate generation removes only work that could never have
+      produced a merge. The EVIDENCE index is left completely untouched — every shared-phone,
+      shared-vehicle and shared-account pair is still generated in full, which is what guarantees
+      merge behaviour is identical.
+
+      HONEST COST, DISCLOSED: the human-review queue shrinks. Cross-gender weak-name pairs
+      (e.g. "Manjunath" vs "Manjula") are no longer surfaced for review. They could never have
+      merged, and they were noise in a queue that was already thousands of entries long — but it
+      IS a behaviour change and we are not going to pretend otherwise.
+    """
     accused=store.all_accused(); by_id={a["AccusedMasterID"]:a for a in accused}
     pairs=set(); ki={}
+
+    # NAME INDEX — blocked on (phonetic key, gender, age bucket). Safe: see docstring.
     for a in accused:
-        for k in phonetic_keys(a["AccusedName"]): ki.setdefault(k,[]).append(a["AccusedMasterID"])
+        for k in phonetic_keys(a["AccusedName"]):
+            for ab in _age_buckets(a.get("AgeYear")):
+                ki.setdefault((k, a.get("GenderID"), ab), []).append(a["AccusedMasterID"])
     for k,ids in ki.items():
-        for x,y in itertools.combinations(sorted(set(ids)),2): pairs.add((x,y))
+        uniq = sorted(set(ids))
+        # THE CAP: skip uninformative mega-blocks (see MAX_NAME_BLOCK). Merges are unaffected —
+        # they come from the evidence index below, which is never capped.
+        if len(uniq) > MAX_NAME_BLOCK:
+            continue
+        for x,y in itertools.combinations(uniq,2): pairs.add((x,y))
+
+    # EVIDENCE INDEX — UNCHANGED. Every shared-entity pair is still generated. This is the index
+    # that produces merges, and we do not touch it.
     ei={}
     for a in accused:
         for e in conn_sig(graph,a["AccusedMasterID"]): ei.setdefault(e,[]).append(a["AccusedMasterID"])

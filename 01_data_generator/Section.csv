@@ -1,0 +1,12 @@
+ActCode,SectionCode,SectionDescription,Active
+BNS,305,Theft in dwelling house / house-breaking related theft,1
+BNS,306,Snatching,1
+BNS,310,Robbery,1
+BNS,331,House-trespass / house-breaking,1
+BNS,303,Theft,1
+BNS,111,Organised crime,1
+BNS,318,Cheating,1
+IPC,380,Theft in dwelling house (legacy),0
+IPC,457,House-breaking by night (legacy),0
+IPC,392,Robbery (legacy),0
+IPC,420,Cheating (legacy),0

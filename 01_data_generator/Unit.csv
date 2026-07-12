@@ -1,0 +1,21 @@
+UnitID,UnitName,TypeID,StateID,DistrictID,Active
+6001,Cubbon Park PS,1,1,1,1
+6002,Shivajinagar PS,1,1,1,1
+6003,Ulsoor PS,1,1,1,1
+6004,High Grounds PS,1,1,1,1
+6005,Cottonpet PS,1,1,1,1
+6006,Vijayanagar PS,1,1,1,1
+6101,Nazarbad PS,1,1,2,1
+6102,Jayalakshmipuram PS,1,1,2,1
+6103,Mysuru North PS,1,1,2,1
+6104,Mysuru East PS,1,1,2,1
+6105,Vijayanagar Mysuru PS,1,1,2,1
+6201,Belagavi City PS,1,1,3,1
+6202,Tilakwadi PS,1,1,3,1
+6203,Udyambag PS,1,1,3,1
+6301,Mangaluru East PS,1,1,4,1
+6302,Mangaluru West PS,1,1,4,1
+6303,Bunder PS,1,1,4,1
+6401,Kalaburagi Urban PS,1,1,5,1
+6402,Kalaburagi Rural PS,1,1,5,1
+6403,Aland PS,1,1,5,1

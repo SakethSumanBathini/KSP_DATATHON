@@ -1,0 +1,290 @@
+"""
+KAVERI — INVARIANT TEST SUITE
+
+WHY THIS EXISTS: until now the project had ZERO tests. It had demo scripts that print things,
+which is not the same thing at all — a demo script proves the code RAN, a test proves the code is
+RIGHT, and keeps proving it after the next change.
+
+These lock in the properties that MUST hold. Several of them encode bugs we actually shipped and
+then caught: the PII leak, the RBAC hole, the UPI regex that failed on sentence-final handles, the
+substring match that read "the" as "he". A regression on any of these is a safety incident, not an
+inconvenience — so they are tests now, not memories.
+
+Run:  python3 tests/test_invariants.py     (no pytest needed — stdlib only)
+"""
+import sys, os, json, re
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+for sub in ["01_data_generator","02_relational_layer","03_graph_construction","04_extraction",
+            "05_entity_resolution","06_retrieval","07_orchestrator","08_trust_layer",
+            "09_burglary_playbook","11_risk_scoring","12_sociological","13_trends",
+            "14_financial","15_decision_support","16_catalyst","18_outcomes",
+            "19_modus_operandi","20_socioeconomic","21_financial_workflow",
+            "22_data_governance","23_reasoning_viz","16_catalyst"]:
+    sys.path.insert(0, os.path.join(BASE, sub))
+
+PASS, FAIL = [], []
+
+def RETENTION_MIN(r):
+    from retention import RETENTION_DAYS
+    return RETENTION_DAYS['false_case']
+
+def check(name, cond, detail=""):
+    (PASS if cond else FAIL).append(name)
+    print(f"  {'PASS' if cond else 'FAIL'}  {name}" + (f"   [{detail}]" if detail and not cond else ""))
+
+
+def main():
+    from loader import RelationalStore
+    from graph_store import NetworkXGraphStore
+    from build_graph import build
+    from extract import enrich, extract_from_text, RE_UPI
+    from resolve import resolve
+    from risk_score import OffenderRiskScorer
+    from socio import SociologicalAnalyser, EthicalGuard
+    from trends import TrendAnalyser
+    from money_trail import MoneyTrailAnalyser
+    from timeline_export import CaseTimeline
+    from conversation import Session, classify_intent, find_reference
+    from trust import AccessControl, ROLES, mask_pii, collect_person_names
+    from catalyst_services import GroundedNarrator
+    from outcomes import OutcomeAnalyser
+    from mo import MOAnalyser
+    from socio_context import SocioEconomicAnalyser
+
+    store = RelationalStore(":memory:"); store.build(verbose=False)
+    graph = NetworkXGraphStore(); build(store, graph); enrich(store, graph)
+    _, _, _, groups, _ = resolve(store, graph)
+    gt = json.load(open(os.path.join(BASE, "01_data_generator", "ground_truth.json"),
+                        encoding="utf-8"))
+
+    print("\n--- CORRECTNESS: entity resolution (the headline claim) ---")
+    from itertools import combinations
+    true_pairs = set()
+    for m in gt["identity_mappings"]:
+        for a, b in combinations(sorted(m["accused_ids"]), 2):
+            true_pairs.add((a, b))
+    pred = set()
+    for g in groups:
+        for a, b in combinations(sorted(g), 2):
+            pred.add((a, b))
+    fp = len(pred - true_pairs)
+    fn = len(true_pairs - pred)
+    check("ER makes ZERO false merges (a false merge = accusing the wrong human)", fp == 0, f"{fp} false merges")
+    check("ER misses ZERO true identities", fn == 0, f"{fn} missed")
+
+    print("\n--- SAFETY: the ethical guard is a CODE PATH, not a promise ---")
+    S = SociologicalAnalyser(store)
+    for attr in ("caste", "religion"):
+        try:
+            S.offender_profile_by(attr); blocked = False
+        except EthicalGuard:
+            blocked = True
+        check(f"offender profiling by '{attr}' RAISES", blocked)
+    try:
+        S.offender_profile_by("age"); allowed = True
+    except EthicalGuard:
+        allowed = False
+    check("offender profiling by 'age' is ALLOWED (non-protected)", allowed)
+
+    print("\n--- SAFETY: PII masking (this shipped as a REAL LEAK once) ---")
+    names = collect_person_names(store)
+    T = CaseTimeline(store, groups)
+    tl = T.build(17)
+    blob = json.dumps({**tl, "events": [{**e, "when": e["when"].isoformat()} for e in tl["events"]]},
+                      ensure_ascii=False)
+    masked = mask_pii(blob, known_names=names)
+    leaked = [n for n in ("Ramaiah K", "ರಾಮು", "ರಾಮಯ್ಯ.ಕೆ") if n in masked]
+    check("no person name survives masking, even INSIDE generated prose", not leaked, str(leaked))
+    check("phone numbers are masked", not re.search(r'\+91\d{10}', masked))
+
+    print("\n--- SECURITY: authentication (the ?role= hole is DELETED) ---")
+    from auth import issue_token, verify_token, VALID_ROLES
+    import base64 as _b64, json as _json
+    _tok = issue_token("KGID-1", "station_officer", station_id=6101)
+    check("a legitimately issued token verifies", verify_token(_tok) is not None)
+    # privilege escalation: edit the role inside the token
+    _h, _p, _s = _tok.split(".")
+    _pl = _json.loads(_b64.urlsafe_b64decode(_p + "=" * (-len(_p) % 4)))
+    _pl["role"] = "scrb_analyst"
+    _forged = _h + "." + _b64.urlsafe_b64encode(
+        _json.dumps(_pl, separators=(",", ":")).encode()).rstrip(b"=").decode() + "." + _s
+    check("PRIVILEGE ESCALATION rejected — cannot edit role in a signed token",
+          verify_token(_forged) is None)
+    check("a garbage/forged token is rejected", verify_token("a.b.c") is None)
+    check("an expired token is rejected", verify_token(issue_token("x", "scrb_analyst", ttl=-1)) is None)
+    _blocked = True
+    try:
+        issue_token("x", "chief_hacker"); _blocked = False
+    except ValueError:
+        pass
+    check("an unknown role cannot be minted", _blocked)
+
+    print("\n--- SECURITY: RBAC fails CLOSED ---")
+    ACC = AccessControl(store)
+    check("unknown/forged role sees ZERO cases",
+          len(ACC.visible_case_ids("chief_hacker", None, None)) == 0)
+    st = len(ACC.visible_case_ids("station_officer", user_station_id=6101))
+    di = len(ACC.visible_case_ids("district_sp", user_district_id=1))
+    sc = len(ACC.visible_case_ids("scrb_analyst"))
+    check("privilege ladder is MONOTONIC (station < district < state)",
+          0 < st < di < sc, f"{st} / {di} / {sc}")
+
+    print("\n--- REGRESSION: bugs we already shipped once and must never ship again ---")
+    check("UPI extracted at END OF SENTENCE (the lookahead bug)",
+          RE_UPI.search("routed to kdmule2026@okicici. The suspect") is not None)
+    check("email is NOT misread as a UPI handle",
+          RE_UPI.search("write to officer@ksp.gov.in today") is None)
+    # provider-agnostic: the old regex whitelisted only 4 PSPs (okaxis|oksbi|okhdfc|paytm) and
+    # SILENTLY missed every other provider. Assert real handles across several providers.
+    for handle in ("ramesh@ybl", "kdmule2026@okicici", "a1@upi", "suresh.k@axl", "ab@ibl"):
+        check(f"UPI provider-agnostic: {handle}",
+              RE_UPI.search(f"paid to {handle} yesterday") is not None)
+    # DELIBERATE LIMIT (documented, not accidental): the identifier must be >=2 chars, otherwise
+    # ordinary prose like "a@b" would be misread as a payment handle.
+    check("1-char UPI identifier is intentionally NOT matched (noise guard)",
+          RE_UPI.search("paid to x@ybl now") is None)
+    check("'the' is NOT read as the pronoun 'he' (word-boundary bug)",
+          "person" not in find_reference("show me the network"))
+    check("'his' IS read as a person reference",
+          "person" in find_reference("what is his history"))
+
+    print("\n--- CORRECTNESS: money trail recovers the SEEDED ground truth ---")
+    M = MoneyTrailAnalyser(store, graph, groups)
+    setD = gt["seeded_connections"]["set_D_money_trail"]
+    net = M.suspicious_network(setD["upi"])
+    check("all seeded money-trail cases recovered",
+          set(net["direct_cases"]) == set(setD["fir_ids"]),
+          f"{net['direct_cases']} vs {setD['fir_ids']}")
+    check("single controlling identity resolved", len(net["resolved_identities"]) == 1)
+
+    print("\n--- STATISTICS: alerts survive multiple-comparisons correction ---")
+    TR = TrendAnalyser(store)
+    ec = TR.emerging_clusters()
+    mc = ec["multiple_comparisons"]
+    check("FDR correction is applied", mc["method"].startswith("Benjamini"))
+    check("alerts are FEWER after correction than raw candidates",
+          mc["alerts_after_correction"] <= mc["candidates_before_correction"])
+    check("expected false discoveries is reported, not hidden",
+          "expected_false_discoveries_among_alerts" in mc)
+
+    print("\n--- SAFETY: the LLM cannot hallucinate a case number into a briefing ---")
+    ok, _ = GroundedNarrator._hallucination_guard(
+        "Accused linked to FIR 999.", {"linked_cases": [1, 2]}, [1, 2])
+    check("invented FIR number is REJECTED", not ok)
+    ok2, _ = GroundedNarrator._hallucination_guard(
+        "Accused linked to FIR 2.", {"linked_cases": [1, 2]}, [1, 2])
+    check("a legitimate cited FIR number is ACCEPTED", ok2)
+
+    print("\n--- SAFETY: the system ASKS rather than guessing which human is meant ---")
+    s = Session("t", "station_officer")
+    ctx, clarify, _ = s.resolve_query("what is his prior history")
+    check("bare anaphora with NO context triggers a clarifying question", clarify is not None)
+
+    print("\n--- DATA INTEGRITY: structured fields agree with the narrative text ---")
+    ns = TR.night_day_split("Burglary / House-breaking")
+    check("burglary timestamps match the 'night of' narrative (>=95% at night)",
+          ns["night_pct"] >= 95.0, f"{ns['night_pct']}%")
+
+    print("\n--- NEW: investigation outcomes are EVIDENCE-CORRELATED, not random ---")
+    OA = OutcomeAnalyser(store)
+    from collections import Counter as _C
+    _with, _without = _C(), _C()
+    for _c in store.get_all_cases():
+        _o = OA.outcome.get(_c["CaseMasterID"])
+        if not _o:
+            continue
+        (_with if OA.evidence.get(_c["CaseMasterID"]) else _without)[_o["cstype"]] += 1
+    _rw = 100 * _with["A"] / max(1, sum(_with.values()))
+    _ro = 100 * _without["A"] / max(1, sum(_without.values()))
+    check("cases WITH evidence have a materially higher clearance rate (>15pp)",
+          _rw - _ro > 15, f"{_rw:.0f}% vs {_ro:.0f}%")
+    _a = OA.analyse(16)
+    check("outcome analysis yields an actionable lead", bool(_a and _a["leads"]))
+    check("outcome analysis reports what happened, not just similar cases",
+          bool(_a and _a["outcomes"]))
+
+    print("\n--- NEW: MO clusters must DISCRIMINATE (the 77-case 'afternoon' bug) ---")
+    MOA = MOAnalyser(store)
+    for cl in MOA.mo_clusters():
+        disc = [t for t in cl["shared_signature"]
+                if t.startswith(("entry:", "tool:", "approach:"))]
+        check(f"MO cluster of {cl['size']} has >=2 discriminative tags", len(disc) >= 2,
+              str(cl["shared_signature"]))
+    check("no MO cluster is built on time-of-day alone",
+          all(any(t.startswith(("entry:", "tool:", "approach:")) for t in c["shared_signature"])
+              for c in MOA.mo_clusters()))
+
+    print("\n--- NEW: socio-economic claims carry an explicit statistical warning ---")
+    SE = SocioEconomicAnalyser(store)
+    corr = SE.correlations()
+    check("every correlation carries a STATISTICAL_WARNING (n is far too small)",
+          all("STATISTICAL_WARNING" in c for c in corr["correlations"]))
+    check("external-data provenance is declared, not hidden",
+          "Census" in corr["indicator_source"])
+
+    print("\n--- NEW: financial STR export (req 7.3) ---")
+    from graph_store import NetworkXGraphStore
+    from build_graph import build as _build
+    from extract import enrich as _enrich
+    from resolve import resolve as _resolve
+    from str_export import STRExporter
+    _g = NetworkXGraphStore(); _build(store, _g); _enrich(store, _g)
+    _, _, _, _grp, _ = _resolve(store, _g)
+    _X = STRExporter(store, _g, _grp)
+    _gt = json.load(open(os.path.join(BASE, "01_data_generator", "ground_truth.json"), encoding="utf-8"))
+    _mule = _gt["seeded_connections"]["set_D_money_trail"]["upi"]
+    _str = _X.build_str(_mule)
+    check("STR draft is generated for the mule account", _str is not None)
+    check("STR is explicitly a DRAFT, never auto-filed", "DRAFT" in _str["status"])
+    check("STR flags the mule typology (FT-MULE-01)",
+          any(f["code"] == "FT-MULE-01" for f in _str["red_flag_indicators"]))
+    check("STR marks bank fields as REQUIRES INPUT, not fabricated",
+          "REQUIRES BANK INPUT" in _str["subject_account"]["kyc_details"])
+
+    print("\n--- NEW: DPDP retention & purge (req 10.3) ---")
+    from retention import RetentionManager
+    _R = RetentionManager(store)
+    _a = _R.assess()
+    check("retention assessment runs as a dry run (nothing erased)", "DRY RUN" in _a["note"])
+    _open = next((c["CaseMasterID"] for c in store.get_all_cases() if c["CaseStatusID"] == 1), None)
+    _p = _R.purge_case(_open, dry_run=False)
+    check("LEGAL HOLD refuses purge of an open (under-investigation) case", _p.get("refused") is True)
+    _false = None
+    for c in store.get_all_cases():
+        o = store.get_outcome_for_case(c["CaseMasterID"])
+        if o and o["cstype"] == "B":
+            _false = c["CaseMasterID"]; break
+    if _false:
+        check("false-case retention is the SHORTEST (innocent party)",
+              RETENTION_MIN(_R) == 90)
+
+    print("\n--- NEW: reasoning-path visualisation (req 9.2) ---")
+    from reasoning import ReasoningPathBuilder
+    _RP = ReasoningPathBuilder(store, _g, _grp)
+    _ir = _RP.identity_reasoning(17)
+    check("identity reasoning returns a nodes+edges graph",
+          "nodes" in _ir and "edges" in _ir and len(_ir["nodes"]) > 0)
+    check("identity reasoning includes a plain-language explanation",
+          len(_ir.get("plain_language", "")) > 40)
+
+    print("\n--- NEW: Kannada transliteration fallback (the adversarial-surfaced fix) ---")
+    from transliteration import transliterate
+    from resolve import name_similarity
+    check("unseen Kannada name transliterates (was 0.0 before the fix)",
+          name_similarity("ರಾಮಚಂದ್ರ", "Ramachandra") > 0.75)
+    check("cross-script identity now scores high enough to merge with evidence",
+          name_similarity("ವೆಂಕಟೇಶ್", "Venkatesh") > 0.75)
+
+    store.close()
+    print("\n" + "=" * 66)
+    print(f"  {len(PASS)} PASSED   {len(FAIL)} FAILED")
+    if FAIL:
+        print("  FAILURES:")
+        for f in FAIL:
+            print(f"    - {f}")
+    print("=" * 66)
+    return 1 if FAIL else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

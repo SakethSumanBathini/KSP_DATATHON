@@ -186,6 +186,82 @@ def _glm_chat(messages, max_tokens=500, temperature=0.2, timeout=20):
 # ═══════════════════════════════════════════════════════════════════════════
 # 1. QuickML — LLM Serving.  GROUNDED narration.
 # ═══════════════════════════════════════════════════════════════════════════
+def route_intent_llm(text, known_intents, timeout=12):
+    """
+    LLM INTENT ROUTER — the fix for "our conversational AI is a keyword lookup table".
+
+    THE PROBLEM THIS SOLVES:
+      classify_intent() matches literal keywords. It works only when an officer happens to use a
+      word we anticipated:
+
+          "show me the network"            -> contains "network"   -> WORKS
+          "who was this guy running with"  -> no keyword           -> "could not map to a capability"
+          "has he done this before"        -> no keyword           -> FAILS
+          "ಕಳ್ಳ" (thief)                    -> no keyword           -> FAILS
+
+      Real officers do not phrase questions from our table. A keyword matcher is not a
+      conversational AI; it is a menu with the labels hidden.
+
+      Meanwhile we were already paying for a language model — and using it ONLY to phrase
+      answers we had already computed. We had a brain and were using it as a typewriter.
+
+    WHAT THIS DOES:
+      Hands the question, plus the list of things KAVERI can actually DO, to GLM and asks it to
+      pick one. That is the entire job. The model NEVER touches the database, never sees a
+      record, and never generates a fact — it only chooses a route.
+
+    WHY THIS IS STILL SAFE (this is the important part):
+      A routing mistake is cheap and visible: the officer gets the wrong TOOL, sees it is wrong,
+      and asks again. A FACT mistake is catastrophic and invisible: the officer believes a lie.
+      So we let the model route, and we never let it retrieve. The deterministic layer still
+      produces every fact, every citation, every merge decision.
+
+      And the router is CONSTRAINED — it must return one of a fixed list of intents. If it
+      returns anything else, or fails, or times out, we fall straight back to the keyword
+      matcher. It can only ever pick from a menu we wrote.
+
+    Returns (intent, "llm") on success, or (None, reason) so the caller can fall back.
+    """
+    if not LLM_ENABLED:
+        return None, "llm_disabled"
+
+    intent_list = ", ".join(sorted(known_intents))
+    system = (
+        "You route a police officer's question to ONE capability of a crime-analysis system. "
+        f"The ONLY valid answers are: {intent_list}, or the word NONE.\n"
+        "Reply with exactly one word from that list and nothing else. No explanation.\n"
+        "The question may be in English or Kannada.\n"
+        "Guidance: questions about accomplices/gangs/who-else -> network. "
+        "Questions about a person's past/priors/aliases/whether they are the same person -> "
+        "identity_history. Questions about how dangerous or urgent -> risk. "
+        "Questions about money/UPI/accounts/transfers -> money_trail. "
+        "Questions about what happened when, or the sequence of events -> timeline. "
+        "Questions about other cases that look like this one -> similar_cases. "
+        "If the question does not fit ANY capability, answer NONE."
+    )
+    try:
+        out = _post("", {
+            "model": LLM_MODEL,
+            "messages": [{"role": "system", "content": system},
+                         {"role": "user", "content": text}],
+            "max_tokens": 12,
+            "temperature": 0.0,
+            "chat_template_kwargs": {"enable_thinking": False},
+        }, timeout=timeout)
+        raw = (out.get("response") or "").strip()
+        if not raw and out.get("choices"):
+            raw = (out["choices"][0].get("message", {}).get("content") or "").strip()
+        raw = _strip_reasoning(raw)
+        # CONSTRAINED: the answer must be one of OUR intents. Anything else is discarded.
+        token = raw.strip().strip(".").strip().lower().split()[0] if raw.strip() else ""
+        if token in known_intents:
+            BACKEND_LOG["routing"] = "catalyst_glm"
+            return token, "llm"
+        return None, f"llm_returned_unknown:{token[:24]}"
+    except Exception as e:
+        return None, f"llm_error:{type(e).__name__}"
+
+
 class GroundedNarrator:
     """
     Catalyst QuickML (LLM Serving) — used for PHRASING ONLY.

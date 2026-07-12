@@ -88,7 +88,28 @@ def detect_language(text):
 
 
 def classify_intent(text):
-    """Return (intent, matched_keyword, language). Kannada and English both routed natively."""
+    """
+    Return (intent, matched_keyword, language).
+
+    TWO-STAGE ROUTING, added after an honest look at what we had built:
+
+      STAGE 1 — KEYWORD MATCH (below). Fast, free, deterministic, and correct whenever the
+                officer happens to use a word we anticipated.
+
+      STAGE 2 — LLM ROUTER (Catalyst GLM). Runs ONLY when the keywords miss. This is what turns
+                "our conversational AI" from a lookup table into something an officer can
+                actually talk to:
+
+                    "who was this guy running with"   keywords: MISS   ->  LLM: network
+                    "has he done this before"         keywords: MISS   ->  LLM: identity_history
+                    "should I be worried about him"   keywords: MISS   ->  LLM: risk
+
+    The LLM picks a ROUTE, never a FACT. A wrong route is cheap and visible — the officer sees
+    the wrong tool and asks again. A wrong FACT is catastrophic and invisible. So the model is
+    allowed to choose which deterministic capability runs, and is never allowed to produce the
+    answer. If the LLM is off, times out, or returns anything not on our list, we keep whatever
+    the keyword stage decided. It can only ever pick from a menu we wrote.
+    """
     low = text.lower()
     lang = detect_language(text)
     for intent, langs in INTENT_KEYWORDS.items():
@@ -98,6 +119,19 @@ def classify_intent(text):
         for kw in langs["kn"]:
             if kw in text:
                 return intent, kw, lang
+    # keywords missed -> ask the LLM to route it (see docstring). Falls back safely.
+    try:
+        import os as _os, sys as _sys
+        _sys.path.insert(0, _os.path.join(
+            _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))), "16_catalyst"))
+        from catalyst_services import route_intent_llm
+        lang = "kn" if any("\u0c80" <= ch <= "\u0cff" for ch in text) else "en"
+        intent, how = route_intent_llm(text, set(INTENT_KEYWORDS.keys()))
+        if intent:
+            return intent, f"llm:{how}", lang
+    except Exception:
+        pass          # LLM unavailable -> keep the deterministic answer below
+
     return "unknown", None, lang
 
 

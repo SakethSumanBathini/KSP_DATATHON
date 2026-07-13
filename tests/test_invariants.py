@@ -478,6 +478,38 @@ def main():
     check("search ranks the right man ABOVE an unrelated one",
           _search_score("Prakash ao", "Prakash Rao") > _search_score("Prakash ao", "Ramesh"))
 
+    # ── NEW: THE IDENTITY REASONING SCREEN. The test never once looked at it. ────────────────
+    # It rendered:  "...because the names ['Ramesh Gowda'] are spelling variants..."
+    # A raw Python list, on the Identity Resolution panel — the one screen the entire product
+    # exists to show, the screen that says we never merge two men on a name alone.
+    #
+    # The leak sweep ran across all 500 cases of /investigate and /converse and was green the
+    # whole time, because it had never called /reasoning/identity. Coverage was measured in CASES,
+    # not in SCREENS. Every surface an officer can READ has to be swept, not every code path I
+    # happened to remember.
+    print("\n--- NEW: the reasoning screens are prose too (the test used to skip them) ---")
+    from reasoning import ReasoningPathBuilder
+    _tr = ReasoningPathBuilder(store, graph, _groups)
+    _screens, _screen_leaks = 0, []
+    # identity_reasoning takes an ACCUSED id, not a group index. Sweep every accused that belongs
+    # to a resolved group — i.e. every person this screen can actually be opened for.
+    _accused_ids = sorted({m for g in _groups for m in g})
+    for _aid in _accused_ids:
+        try:
+            _r = _tr.identity_reasoning(_aid)
+        except Exception:
+            continue
+        if not _r:
+            continue
+        _txt = _r.get("plain_language", "")
+        _screens += 1
+        if _re_any_list.search(_txt):
+            _screen_leaks.append(_re_any_list.search(_txt).group()[:40])
+    check("identity reasoning screens were actually rendered (not vacuous)", _screens > 0)
+    check("NO raw Python list on any identity-reasoning screen", not _screen_leaks)
+    if _screen_leaks:
+        print("      LEAK:", _screen_leaks[:3])
+
     # ── NEW: every capability the app ADVERTISES must actually work ─────────────────────────
     # The fallback said: "I could not map that to a capability. Try: network, similar cases,
     # timeline, risk, prior history, money trail, trends." Typing "prior history" — a phrase from

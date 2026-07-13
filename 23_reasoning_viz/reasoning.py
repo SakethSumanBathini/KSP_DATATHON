@@ -104,9 +104,22 @@ class ReasoningPathBuilder:
             "member_cases": [self.by_id[m]["CaseMasterID"] for m in members],
             "nodes": nodes,
             "edges": edges,
+            # SIXTH RAW-LIST LEAK — AND IT WAS ON THE ONE SCREEN THAT MATTERS.
+            #
+            # This rendered as:  ...because the names ['Ramesh Gowda'] are spelling variants...
+            #
+            # The Identity Resolution panel is the screen the whole product is built to show. It is
+            # the screen that says KAVERI never merges two men on a name alone — and it had a raw
+            # Python list sitting in the middle of it.
+            #
+            # My leak test sweeps /investigate and /converse across all 500 cases. It has never
+            # once called /reasoning/identity. The test covers the plumbing and skips the money
+            # shot: coverage measured in cases, not in SCREENS. It was green the entire time.
             "plain_language": (
                 f"KAVERI concluded these {len(members)} FIR records describe ONE person because the "
-                f"names {distinct_names} are spelling variants of the same name"
+                f"name{'s' if len(distinct_names) > 1 else ''} "
+                f"{', '.join(repr(n)[1:-1] for n in distinct_names) if len(distinct_names) > 1 else str(list(distinct_names)[0])}"
+                f" {'are' if len(distinct_names) > 1 else 'is'} used consistently across them"
                 + (f", AND the same physical evidence ({', '.join(list(corroborated)[:2])}) recurs "
                    f"across the cases" if corroborated else "")
                 + ". A human officer verifies before any action."),

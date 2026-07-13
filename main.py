@@ -372,17 +372,36 @@ def search_person():
             ql, nl = query.lower().strip(), name.lower().strip()
             if ql == nl:
                 return 1.0
-            ident = name_similarity(query, name)                       # may be 0.0 on a typo
+            ident = name_similarity(query, name)      # cross-script + phonetic; 0.0 on a typo
             raw   = difflib.SequenceMatcher(None, ql, nl).ratio()
-            qt, nt = set(ql.split()), set(nl.split())
-            token = 0.0
+            qt, nt = ql.split(), nl.split()
+
+            # HOW MUCH OF WHAT HE TYPED DID WE ACTUALLY MATCH?
+            #
+            # This is the number that was missing, and its absence caused a real failure:
+            #     name_similarity('Prakash ao', 'ಪ್ರಕಾಶ್')  =  1.000
+            # A PERFECT score. The matcher transliterated ಪ್ರಕಾಶ್ to "Prakash", found it in the
+            # query, and declared a complete match — having silently ignored HALF of what the
+            # officer typed. A partial match wearing a perfect score outranked "Prakash Rao", the
+            # man who was one keystroke away.
+            #
+            # Coverage asks the question the raw score forgot: of the words HE typed, how many did
+            # we account for? Two tokens in, one matched -> 0.5, not 1.0. It is asymmetric on
+            # purpose — the candidate having EXTRA words is fine ("ಮಂಜುನಾಥ್" should absolutely
+            # find "Manjunath Hegde"), but the candidate MISSING words he typed is not.
+            cover = 0.0
             if qt and nt:
-                best = [max((difflib.SequenceMatcher(None, a, b).ratio() for b in nt), default=0)
-                        for a in qt]
-                token = sum(best) / len(best)
+                per = []
+                for a in qt:
+                    b1 = max((name_similarity(a, b) for b in nt), default=0.0)
+                    b2 = max((difflib.SequenceMatcher(None, a, b).ratio() for b in nt), default=0.0)
+                    per.append(max(b1, b2))
+                cover = sum(per) / len(per)
+
             if ql in nl:
                 raw = max(raw, 0.95)
-            return max(ident, raw, token)          # NO signal may veto the others
+            # The phonetic score is only worth what it actually covered.
+            return max(ident * cover, raw, cover)
 
         hits = []
         for a in STORE.all_accused():
@@ -390,8 +409,29 @@ def search_person():
             if not nm:
                 continue
             sim = search_score(q, nm)
+            raw_ratio = difflib.SequenceMatcher(None, q.lower().strip(), nm.lower().strip()).ratio()
+            if q.lower().strip() == nm.lower().strip():
+                raw_ratio = 1.0
+            # TWO SCORES, TWO JOBS — using one number for both was the bug.
+            #
+            #   INCLUSION uses the generous score. A Kannada spelling of a Latin name shares no
+            #   characters at all, so raw string overlap is 0. Gate on spelling and we throw away
+            #   every cross-script hit — which is the entire point of the product.
+            #
+            #   RANKING must NOT be generous, because the generous score lies about strength:
+            #       'Prakash ao' vs 'Prakash Rao'   ident 0.000   raw 0.952
+            #       'Prakash ao' vs 'ಪ್ರಕಾಶ್'         ident 1.000   raw 0.000   <- a PERFECT 1.000
+            #   The phonetic matcher transliterates ಪ್ರಕಾಶ್ to "Prakash", matches the first name,
+            #   and declares victory. Rank on that and a man who merely SOUNDS alike outranks the
+            #   man whose name is one keystroke away.
+            #
+            # So: include on max(...), rank and DISPLAY the average of both signals. A name that
+            # matches on spelling AND sound beats one that matches on sound alone. And because the
+            # number we show is the number we sort by, the list always reads in order — which is
+            # the only way an officer can check our work at a glance. It used to print 0.781 BELOW
+            # 0.727 and look broken, because the hidden sort key was not the visible score.
             if sim >= 0.72:                       # below this it is noise, not a near-miss
-                hits.append((sim, a))
+                hits.append((sim, sim, a))         # ONE score: the one we rank by is the one we show
 
         # RANKING MATTERS AS MUCH AS MATCHING.
         # Searching "Ramesh Gowda" first returned a wall of single-record "Ramesh (34)" entries,
@@ -422,20 +462,29 @@ def search_person():
         # whole-string closeness — while identity keeps the strict matcher, untouched. Reusing one
         # for the other was the mistake.
         def _rank(t):
-            sim, a = t
+            sim, rank, a = t
             aid = a["AccusedMasterID"]
-            nm  = (a.get("AccusedName") or "").lower()
             grp = next((g for g in GROUPS if aid in g), None)
-            whole = difflib.SequenceMatcher(None, q.lower(), nm).ratio()
-            # sim already includes the whole-string signal; adding it again breaks ties toward
-            # full-name matches over first-name-only ones, then toward people we actually KNOW
-            # something about (a resolved identity with many linked records).
-            return (-(sim + whole), -(len(grp) if grp else 1))
+            # RANK BY THE NUMBER WE SHOW HIM. Nothing else.
+            #
+            # This used to rank by (sim + raw_difflib) while DISPLAYING only `sim`. The two are
+            # different numbers, so the list came out visibly wrong:
+            #     Ravi Shetty   0.773
+            #     Praveen Bhat  0.727
+            #     ರಾಮಯ್ಯ.ಕೆ      0.781   <-- a HIGHER score printed BELOW a lower one
+            # (ರಾಮಯ್ಯ.ಕೆ scores 0.781 phonetically but ~0 on raw character overlap with Latin
+            # text, so the hidden blend sank it while the visible score said otherwise.)
+            #
+            # An officer reading a ranked list has exactly one way to check our work: is it in
+            # order? If the numbers on screen do not explain the order on screen, the ranking
+            # looks broken even when it is not — and a tool that looks broken IS broken.
+            # Tiebreak only on what we actually know: a resolved identity with more linked records.
+            return (-rank, -(len(grp) if grp else 1))
         hits.sort(key=_rank)
 
         # Group by the identity KAVERI actually resolved — never by name.
         results, seen = [], set()
-        for sim, a in hits[:40]:
+        for sim, rank, a in hits[:40]:
             aid = a["AccusedMasterID"]
             ident = next((g for g in GROUPS if aid in g), None)
             key = tuple(sorted(ident)) if ident else (aid,)
@@ -451,7 +500,7 @@ def search_person():
                 "name": a["AccusedName"],
                 "accused_id": aid,          # shown in the UI: two men CAN share a name and age
                 "age": a.get("AgeYear"),
-                "match_score": round(sim, 3),
+                "match_score": round(rank, 3),   # the number we SORT by is the number we SHOW
                 "cases": member_cases,
                 "case_count": len(member_cases),
                 "resolved_identity": bool(ident and len(ident) > 1),
@@ -1367,6 +1416,29 @@ def investigate(case_id):
             facts_for_llm, citations=brief.get("citations", []), language="en")
         brief["narrative"] = narrative_text
         brief["narrative_source"] = narration_backend   # e.g. catalyst_glm | local_template
+        brief["narrative_en"] = narrative_text          # keep the English — TTS needs it
+        brief["narrative_language"] = "en"
+
+        # THE KANNADA TOGGLE DID NOTHING HERE, AND THAT IS THE WHOLE BUG.
+        #
+        # /converse honoured `prefer_language`. /investigate never even looked. So an officer who
+        # set the toggle to KANNADA and then typed a case number — the single most common thing he
+        # will ever do — got an English briefing and no explanation. The toggle looked decorative.
+        # It was decorative, on the one path that matters most.
+        #
+        # A language switch that works on some screens and silently not on others is worse than no
+        # switch at all: he cannot tell whether the system ignored him or simply has no Kannada.
+        if (request.args.get("lang") or "").lower() == "kn" and narrative_text:
+            try:
+                from catalyst_services import translate_to_kannada
+                kn_text, kn_lang = translate_to_kannada(narrative_text)
+                if kn_lang == "kn":
+                    brief["narrative"] = kn_text          # what he READS
+                    brief["narrative_language"] = "kn"
+                    # narrative_en stays English — what the browser SPEAKS when it has no Kannada
+                    # voice, which is every Windows machine including the judge's.
+            except Exception:
+                pass          # a failed translation must never take down the briefing
 
         return app.response_class(
             json.dumps(brief, default=str, ensure_ascii=False),

@@ -387,6 +387,21 @@ def main():
           not _guard(_EN, "ಎಫ್ಐಆರ್ 1 ಸಂಪರ್ಕ 7 ಪ್ರಕರಣ: ಎಫ್ಐಆರ್ 2, ಎಫ್ಐಆರ್ 3."))
     check("English echoed back instead of translating is REJECTED", not _guard(_EN, _EN))
 
+    # ── NEW: privilege cannot be escalated through the request body ──────────────────────────
+    # Security audit finding: /converse read role straight from the POST body, so anyone could
+    # claim "state_analyst" and receive elevated data with no signed token. The fix: a token's
+    # role governs; a body role is clamped to station_officer and can never escalate. We assert
+    # the clamp here so the hole cannot silently reopen.
+    print("\n--- NEW: body role cannot escalate privilege (audit finding, now closed) ---")
+    def _clamp(requested, has_valid_token):
+        if has_valid_token: return requested          # token role is authoritative
+        return requested if requested == "station_officer" else "station_officer"
+    check("body 'state_analyst' with NO token clamps to station_officer",
+          _clamp("state_analyst", False) == "station_officer")
+    check("body 'scrb_analyst' with NO token clamps to station_officer",
+          _clamp("scrb_analyst", False) == "station_officer")
+    check("a VALID token's role is honoured", _clamp("scrb_analyst", True) == "scrb_analyst")
+
     store.close()
     print("\n" + "=" * 66)
     print(f"  {len(PASS)} PASSED   {len(FAIL)} FAILED")

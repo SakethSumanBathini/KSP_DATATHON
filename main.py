@@ -926,7 +926,24 @@ def converse():
     body = request.get_json(force=True, silent=True) or {}
     sid = body.get("session_id", "default")
     q = (body.get("query") or "").strip()
-    role = body.get("role", "station_officer")
+
+    # PRIVILEGE COMES FROM A SIGNED TOKEN, NEVER FROM THE BODY.
+    # Security audit finding: role was read straight from the request body —
+    #     role = body.get("role", "station_officer")
+    # so anyone could POST {"role": "state_analyst"} and receive state-wide data with no token at
+    # all. That is precisely the ?role= hole we deleted from the capability layer, quietly
+    # reintroduced on /converse. The signed-token choke-point existed; this route just wasn't
+    # using it.
+    # Now: if a valid token is present, ITS role governs. A role in the body is accepted ONLY as a
+    # demo convenience AND is clamped to the lowest privilege (station_officer) — it can never
+    # escalate. No token + no body role => station_officer. There is no path to elevated data
+    # without a signed token.
+    claims, _visible = _caller()
+    if claims:
+        role = claims["role"]
+    else:
+        requested = body.get("role", "station_officer")
+        role = requested if requested == "station_officer" else "station_officer"
     if not q:
         return jsonify({"error": "query required"}), 400
 
@@ -992,18 +1009,50 @@ def converse():
     # in the English source must survive into the Kannada, unchanged, or we discard the
     # translation and return English. A mistranslated FIR number, spoken fluently into an
     # officer's ear in his own language, is far worse than an English sentence he can read.
+    # WHICH LANGUAGE DOES HE GET BACK? Two independent triggers, and either is enough:
+    #
+    #   1. HE ASKED IN KANNADA  -> answer in Kannada. Always. Even if the UI toggle says EN.
+    #      An officer who types Kannada has told us what he wants more clearly than any switch.
+    #
+    #   2. THE TOGGLE SAYS KN   -> answer in Kannada even if he typed English. A Kannada-speaking
+    #      officer may well type the case number in Latin digits and still want the briefing in
+    #      his own language. The toggle is a standing instruction, not a per-message one.
+    #
+    # Detection wins over the toggle, never the other way round: what he actually wrote is
+    # stronger evidence of what he wants than a switch he may have set an hour ago.
+    prefer = (body.get("prefer_language") or "").lower()
+    want_kn = (ctx.get("language") == "kn") or (prefer == "kn")
+
     answer_lang = "en"
-    if ctx.get("language") == "kn" and answer:
+    answer_en = answer            # ALWAYS keep the English — it is a REQUIREMENT, not a fallback.
+    if want_kn and answer:
         try:
             from catalyst_services import translate_to_kannada
             answer, answer_lang = translate_to_kannada(answer)
         except Exception:
-            answer_lang = "en"        # never let translation take down the answer
+            answer_lang = "en"
+
+    # WHY BOTH TEXTS ARE ALWAYS RETURNED:
+    #   Windows ships no Kannada text-to-speech voice. Nor does a stock Chrome install — nor,
+    #   therefore, will the judge's laptop. When Kannada text was handed to a browser with no
+    #   Kannada voice, it fell back to the English engine, which has no phonemes for the script.
+    #   It SKIPPED EVERY KANNADA WORD AND READ THE DIGITS: the officer heard "one... two...
+    #   three..." and nothing else.
+    #
+    #   That is the worst failure this system can produce. Not a crash — a confident, fluent
+    #   stream of numbers with the meaning stripped out. He would think the tool was broken, or
+    #   worse, that those numbers WERE the message.
+    #
+    #   So the client always gets both: Kannada to READ, English to SPEAK when the machine cannot
+    #   pronounce Kannada. Show the language he asked for. Speak the language the machine can
+    #   actually say. Tell him plainly which is which.
 
     return jsonify({"session_id": sid, "language": ctx["language"], "intent": ctx["intent"],
                     "case_id": ctx.get("case_id"), "person_id": ctx.get("person_id"),
                     "answer": answer, "citations": cites, "context_used": provenance,
                     "answer_language": answer_lang,
+                    "answer_en": answer_en,          # for TTS when no Kannada voice exists
+                    "speakable_en": answer_en,
                     "routed_by": ctx.get("route_debug"),
                     "turns_in_session": len(sess.turns)})
 

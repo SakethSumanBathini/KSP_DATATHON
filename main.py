@@ -1067,6 +1067,30 @@ def converse():
 
     ctx, clarification, provenance = sess.resolve_query(q)
 
+    # THE CASE ON HIS SCREEN IS THE CONTEXT. FULL STOP.
+    #
+    # Typing "prior history" with case 1 open returned:
+    #     "I could not map that to a capability. Try: network, ... prior history, ..."
+    # It told him to try the exact words he had just typed. Three faults in one sentence:
+    #
+    #   1. It DID map the query — the router classified identity_history correctly. It then found
+    #      no person in context and fell through to a message blaming his wording: an error that
+    #      named a cause it had never checked. I have now written that same bug three times today.
+    #   2. The resolver only carries the open case forward when the query LOOKS anaphoric — "this
+    #      case", "he", "him". "prior history" contains no pronoun, so it decided the words
+    #      referred to nothing, and dropped the case that was open on his screen.
+    #   3. It should not have needed a person at all. The case is in front of him and the case has
+    #      an accused. No officer looking at FIR 1 who types "prior history" means anyone other
+    #      than the man charged in FIR 1.
+    #
+    # An officer does not restate his context in every sentence. Neither does a colleague.
+    if ctx.get("case_id") is None and ui_case is not None:
+        try:
+            ctx["case_id"] = int(ui_case)
+            provenance.append(f"FIR {int(ui_case)} is the case open on screen")
+        except (TypeError, ValueError):
+            pass
+
     # Surface WHY routing went the way it did. When the LLM router silently pointed at the wrong
     # Catalyst endpoint, every question fell back to keywords and nothing anywhere said so.
     # NO bare `except: pass` here. Three separate bugs today hid behind a swallowed exception —
@@ -1156,6 +1180,30 @@ def _answer_for(ctx, role):
     then fail to understand "his history" on the very next turn.
     """
     intent, cid, pid = ctx["intent"], ctx.get("case_id"), ctx.get("person_id")
+
+    # HE IS LOOKING AT CASE 1. "PRIOR HISTORY" MEANS THE MAN IN CASE 1.
+    #
+    # Typing "prior history" on an open case returned:
+    #     "I could not map that to a capability. Try: network, similar cases, ... prior history ..."
+    # It told him to try the exact words he had just typed. Two separate failures in one sentence:
+    #
+    #   1. It DID map the query — the router classified it as identity_history correctly. It then
+    #      found no person_id in the session and fell through to a message that blamed his
+    #      wording. Another error that named a cause it had not checked.
+    #   2. It should never have needed a person_id. The case is open in front of him and the case
+    #      has an accused. No officer looking at case 1 who asks "has he done this before" means
+    #      anyone other than the man charged in case 1.
+    #
+    # So: if the intent needs a person and we do not have one, take the accused from the case he
+    # is actually looking at. That is not a guess; it is the only thing he could have meant.
+    if intent in ("identity_history", "risk") and not pid and cid:
+        # NO try/except HERE. I wrapped this very fix in `except Exception: pass` an hour ago and
+        # it swallowed the failure — the third silent except I have written today while deleting
+        # silent excepts from everywhere else. If this breaks, it must break loudly.
+        _acc = [a for a in STORE.all_accused() if a.get("CaseMasterID") == cid]
+        if _acc:
+            pid = _acc[0]["AccusedMasterID"]
+            ctx["person_id"] = pid
     learned = {}
     if intent == "network" and cid:
         b = PLAYBOOK.investigate(cid)
@@ -1221,6 +1269,10 @@ def _answer_for(ctx, role):
             parts.append(active[0]["warning"])
         cites = (active[0]["citations"] if active else [])
         return (" ".join(parts) or "No elevated patterns detected."), cites, learned
+    if intent in ("identity_history", "risk") and not pid:
+        return ("I understood you want prior history, but no case or person is open — so I do not "
+                "know whose history you mean. Open a case (type its number) or search a name "
+                "first, then ask again."), [], learned
     return ("I could not map that to a capability. Try: network, similar cases, timeline, "
             "risk, prior history, money trail, or trends."), [], learned
 

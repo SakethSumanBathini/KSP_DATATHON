@@ -478,6 +478,24 @@ def main():
     check("search ranks the right man ABOVE an unrelated one",
           _search_score("Prakash ao", "Prakash Rao") > _search_score("Prakash ao", "Ramesh"))
 
+    # ── NEW: every capability the app ADVERTISES must actually work ─────────────────────────
+    # The fallback said: "I could not map that to a capability. Try: network, similar cases,
+    # timeline, risk, prior history, money trail, trends." Typing "prior history" — a phrase from
+    # its OWN suggestion list, with a case open on screen — produced that same message again. The
+    # app told the officer to try the exact words he had just typed.
+    # The help text was hand-written prose; the router had its own keywords; they drifted. If we
+    # advertise a capability, it has to exist.
+    print("\n--- NEW: every phrase in the help text is a phrase the router accepts ---")
+    from conversation import classify_intent
+    ADVERTISED = ["network", "similar cases", "timeline", "risk",
+                  "prior history", "money trail", "trends"]
+    _unrouted = [p for p in ADVERTISED if classify_intent(p)[0] in (None, "unknown", "fallback")]
+    check("every advertised phrase routes to a real intent", not _unrouted)
+    if _unrouted:
+        print("      UNROUTED:", _unrouted)
+    check("'prior history' routes to identity_history",
+          classify_intent("prior history")[0] == "identity_history")
+
     store.close()
     print("\n" + "=" * 66)
     print(f"  {len(PASS)} PASSED   {len(FAIL)} FAILED")

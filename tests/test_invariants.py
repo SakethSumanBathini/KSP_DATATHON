@@ -453,6 +453,10 @@ def main():
           _clamp("scrb_analyst", False) == "station_officer")
     check("a VALID token's role is honoured", _clamp("scrb_analyst", True) == "scrb_analyst")
 
+    # NOTE: the route-level "no endpoint serves a name without a token" sweep runs against the
+    # LIVE app (it needs the Flask app object, which is not importable from this unit-test dir).
+    # It lives in the PowerShell audit and was verified live: /identity/<id> now returns 401.
+
     # ── NEW: SEARCH must not inherit IDENTITY's strictness ──────────────────────────────────
     # A random typo storm caught this. name_similarity("Prakash ao", "Prakash Rao") returns a HARD
     # 0.000 — the surname-discipline rule (which correctly stops "Prakash Reddy" merging with

@@ -1575,6 +1575,16 @@ def investigate(case_id):
 
 @app.route("/identity/<int:accused_id>")
 def identity(accused_id):
+    # THIS ROUTE HANDED FULL ACCUSED NAMES AND CASE IDS TO ANYONE, NO TOKEN.
+    #
+    # A route-by-route sweep — enumerating EVERY endpoint, not the handful I remembered testing —
+    # found it. /reasoning/identity/N is gated behind _caller(); this older /identity/N sibling
+    # was not, and returned "Ramesh Gowda, FIR 1, FIR 4, ..." to an anonymous caller. Named
+    # suspects with no authentication is exactly the exposure the whole trust layer exists to
+    # prevent, sitting on a route my tests had never once opened.
+    claims, _visible = _caller()
+    if claims is None:
+        return _unauth()
     try:
         hist = PLAYBOOK.R.cases_for_identity(accused_id)
         return app.response_class(

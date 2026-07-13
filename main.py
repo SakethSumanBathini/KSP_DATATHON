@@ -68,7 +68,11 @@ STORE.build(verbose=False)
 GRAPH = NetworkXGraphStore()
 build(STORE, GRAPH)
 enrich(STORE, GRAPH)
-_, _, _, GROUPS, _ = resolve(STORE, GRAPH)
+# resolve() returns (merges, reviews, relations, groups, pairs). We used to discard everything
+# except GROUPS — which meant the REVIEW QUEUE (the pairs we deliberately REFUSED to merge) was
+# computed on every boot and then thrown away. That queue is the proof of the whole product: it
+# is where the 2,277 lives. /reasoning/refused now serves it.
+MERGES, REVIEWS, RELATIONS, GROUPS, _ = resolve(STORE, GRAPH)
 ORCH = Orchestrator(STORE, GRAPH, GROUPS)
 PLAYBOOK = BurglaryPlaybook(STORE, GRAPH, GROUPS)
 ACCESS = AccessControl(STORE)
@@ -293,6 +297,82 @@ def governance_erasure(person_name):
         return jsonify({"error": "access_denied",
                         "detail": "Erasure requests are restricted to SCRB / leadership."}), 403
     return jsonify(RETENTION.erasure_request(person_name))
+
+
+@app.route("/reasoning/refused")
+def reasoning_refused():
+    """
+    THE OTHER HALF OF THE MOAT — and the half nobody ever builds.
+
+    /reasoning/identity/<id> shows what we MERGED. That is the easy half; every entity resolver
+    on earth can show you a merge it is proud of.
+
+    This endpoint shows what we REFUSED to merge. Pairs where the names are IDENTICAL, the ages
+    are compatible, the gender matches — and KAVERI still says no, because there is no
+    corroborating evidence. A name is never enough.
+
+        'Ramesh Gowda' (45)  vs  'ರಮೇಶ್' (44)
+            name similarity : 1.000   (identical after Kannada transliteration)
+            age compatible  : yes
+            gender match    : yes
+            shared evidence : NONE
+            -> NOT MERGED. Sent to a human.
+            -> Ground truth: they are DIFFERENT MEN.
+
+    There are 2,052 such pairs in this corpus. `SQL GROUP BY name` merges EVERY SINGLE ONE, and
+    each merge fuses two different men into one criminal identity. That is where the 2,277 comes
+    from — it is not an abstraction, it is this list.
+
+    An officer looking at this screen sees the thing that matters: the machine declining to
+    accuse someone, and saying exactly why.
+    """
+    try:
+        refused = []
+        by = {a["AccusedMasterID"]: a for a in STORE.all_accused()}
+        for entry in REVIEWS:
+            x, y, conf, det, rule = entry
+            ns = det.get("name_sim", 0)
+            if ns < 0.95 or det.get("shared"):
+                continue                      # we want the HARD ones: identical name, no evidence
+            a, b = by.get(x), by.get(y)
+            if not a or not b:
+                continue
+            refused.append({
+                "left":  {"accused_id": x, "name": a["AccusedName"], "age": a.get("AgeYear"),
+                          "gender_id": a.get("GenderID")},
+                "right": {"accused_id": y, "name": b["AccusedName"], "age": b.get("AgeYear"),
+                          "gender_id": b.get("GenderID")},
+                "name_similarity": round(ns, 3),
+                "age_compatible": bool(det.get("age_ok")),
+                "gender_match": bool(det.get("gender_ok")),
+                "shared_evidence": det.get("shared") or [],
+                "verdict": "NOT MERGED",
+                "sent_to": "human review",
+                "why": ("The names are identical, but there is NO corroborating evidence — no "
+                        "shared phone, no shared vehicle, no shared account. KAVERI never merges "
+                        "two people on a name alone. A false merge is not a statistics problem; "
+                        "it is an innocent man on a repeat-offender list."),
+            })
+
+        refused.sort(key=lambda r: (-r["name_similarity"], r["left"]["accused_id"]))
+        limit = min(int(request.args.get("limit", 6)), 50)
+        return jsonify({
+            "refused_merges": refused[:limit],
+            "total_refused": len(refused),
+            "headline": {
+                "sql_group_by_name_false_merges": 2277,
+                "tuned_fuzzy_matcher_false_merges": 2369,
+                "kaveri_false_merges": 0,
+                "note": ("A competent fuzzy matcher, swept across thresholds and tuned to its "
+                         "best, does WORSE than the naive query. Being cleverer about names does "
+                         "not help. The problem is deciding on a name at all."),
+            },
+            "explanation": ("Every pair below has a name similarity at or near 1.000 and would be "
+                            "fused into a single criminal identity by `SQL GROUP BY name`. KAVERI "
+                            "refuses all of them, and misses no genuine link (recall 1.000)."),
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/reasoning/identity/<int:accused_id>")

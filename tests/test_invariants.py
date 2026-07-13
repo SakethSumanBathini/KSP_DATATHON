@@ -363,6 +363,30 @@ def main():
     check("no recommended action contains a raw Python list/dict", not _leaks)
     check("action items were actually generated (test is not vacuous)", len(_surfaces) > 0)
 
+    # ── NEW: the Kannada translation guard — a mangled FIR number must never reach an officer ──
+    # We have ALREADY caught this model inflating a man's record from 7 cases to 13, in production.
+    # A translation is a full LLM rewrite of a police briefing: the perfect place for a case number
+    # to change silently, then be READ ALOUD, fluently, in the officer's own language. So the
+    # translation is not trusted — it is checked. Every number in the English source must appear
+    # in the Kannada, unchanged, or the translation is discarded and English is returned.
+    print("\n--- NEW: Kannada translation guard (numbers must survive or we ship English) ---")
+    import re as _re
+    def _guard(src_en, kn):
+        if sum(1 for ch in kn if "\u0c80" <= ch <= "\u0cff") < 5:
+            return False
+        tr = _re.findall(r"\d+", kn)
+        return all(n in tr for n in _re.findall(r"\d+", src_en))
+    _EN = "FIR 1 is linked to 7 other cases: FIR 2, FIR 3. Phone +916513911270."
+    check("honest translation is ACCEPTED",
+          _guard(_EN, "ಎಫ್ಐಆರ್ 1 ಸಂಪರ್ಕ 7 ಪ್ರಕರಣ: ಎಫ್ಐಆರ್ 2, ಎಫ್ಐಆರ್ 3. ದೂರವಾಣಿ +916513911270."))
+    check("inflated count 7->13 is REJECTED (the real production hallucination)",
+          not _guard(_EN, "ಎಫ್ಐಆರ್ 1 ಸಂಪರ್ಕ 13 ಪ್ರಕರಣ: ಎಫ್ಐಆರ್ 2, ಎಫ್ಐಆರ್ 3. ದೂರವಾಣಿ +916513911270."))
+    check("altered FIR number 3->9 is REJECTED",
+          not _guard(_EN, "ಎಫ್ಐಆರ್ 1 ಸಂಪರ್ಕ 7 ಪ್ರಕರಣ: ಎಫ್ಐಆರ್ 2, ಎಫ್ಐಆರ್ 9. ದೂರವಾಣಿ +916513911270."))
+    check("dropped phone number is REJECTED",
+          not _guard(_EN, "ಎಫ್ಐಆರ್ 1 ಸಂಪರ್ಕ 7 ಪ್ರಕರಣ: ಎಫ್ಐಆರ್ 2, ಎಫ್ಐಆರ್ 3."))
+    check("English echoed back instead of translating is REJECTED", not _guard(_EN, _EN))
+
     store.close()
     print("\n" + "=" * 66)
     print(f"  {len(PASS)} PASSED   {len(FAIL)} FAILED")

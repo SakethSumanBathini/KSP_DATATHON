@@ -25,7 +25,8 @@ HONEST STATUS  (read this before trusting it)
     (c) is marked UNVERIFIED below until you run verify_catalyst.py against your tenant.
   Do not claim "Catalyst-native" to a judge until that script prints PASS for each service.
 """
-import os, json, time, urllib.request, urllib.error, urllib.parse
+import os
+import re, json, time, urllib.request, urllib.error, urllib.parse
 
 # ── Catalyst GenAI wiring (GLM-4.7-Flash via QuickML LLM Serving) ──
 # NOTE ON ENV VAR NAMES: Catalyst REJECTS any environment variable whose name starts with a
@@ -186,6 +187,82 @@ def _glm_chat(messages, max_tokens=500, temperature=0.2, timeout=20):
 # ═══════════════════════════════════════════════════════════════════════════
 # 1. QuickML — LLM Serving.  GROUNDED narration.
 # ═══════════════════════════════════════════════════════════════════════════
+def translate_to_kannada(text, timeout=20):
+    """
+    ANSWER THE OFFICER IN THE LANGUAGE HE ASKED IN.
+
+    THE BUG THIS FIXES:
+      KAVERI correctly DETECTED Kannada ("language": "kn") and then answered entirely in English.
+      Zero Kannada characters in the reply. For a Karnataka State Police tool, being able to hear
+      Kannada and not speak it is not bilingual — it is a party trick.
+
+      And the text-to-speech made it actively harmful: the voice was set to kn-IN while the text
+      was English, so Chrome read ENGLISH WORDS THROUGH A KANNADA PHONETIC ENGINE. Not an accent —
+      noise. An officer with his hands full and his eyes up would hear garbage.
+
+    WHY THIS IS DANGEROUS, AND WHAT GUARDS IT:
+      Handing a police briefing to an LLM and asking it to rewrite the whole thing is exactly how
+      you get "FIR 7" silently becoming "FIR 9", or "linked to 7 cases" becoming "linked to 13" —
+      we have ALREADY caught this model inflating a man's record from 7 cases to 13 in production.
+      A mistranslated case number is worse than no translation at all: it is a wrong FIR, in the
+      officer's ear, in his own language, sounding perfectly fluent.
+
+      So the model is not trusted. It is CHECKED:
+
+        1. Every digit sequence in the English source is extracted (FIR numbers, counts, phone
+           numbers, distances, dates).
+        2. The translation is produced.
+        3. Every one of those numbers must appear IN THE TRANSLATION, unchanged.
+        4. If a single one is missing or altered -> WE DISCARD THE TRANSLATION AND RETURN ENGLISH.
+
+      English the officer can read beats Kannada he cannot trust. The failure mode is boring on
+      purpose. We would rather be less impressive than be wrong about a man's case number.
+
+    Returns (text, "kn") on a verified translation, or (original_english, "en") on any doubt.
+    """
+    if not LLM_ENABLED or not text or not text.strip():
+        return text, "en"
+
+    # 1. the facts that must survive, exactly
+    source_numbers = re.findall(r"\d+", text)
+
+    system = (
+        "You are a translator for the Karnataka State Police. Translate the officer's briefing "
+        "from English into natural, professional Kannada.\n"
+        "ABSOLUTE RULES:\n"
+        "1. Every number, FIR number, phone number, date, distance and count must be reproduced "
+        "EXACTLY as it appears. Never change, round, drop or add a number.\n"
+        "2. Keep proper names and phone numbers in their original form.\n"
+        "3. Translate ONLY. Add no facts, no commentary, no opinions.\n"
+        "4. Output the Kannada translation and nothing else."
+    )
+    try:
+        out = _glm_chat([{"role": "system", "content": system},
+                         {"role": "user", "content": text}],
+                        max_tokens=700, temperature=0.0, timeout=timeout)
+        kn = _strip_reasoning(out or "").strip()
+        if not kn:
+            return text, "en"
+
+        # 2. it must actually BE Kannada
+        kn_chars = sum(1 for ch in kn if "\u0c80" <= ch <= "\u0cff")
+        if kn_chars < 5:
+            return text, "en"
+
+        # 3. THE GUARD. Every number from the source must survive, unchanged.
+        translated_numbers = re.findall(r"\d+", kn)
+        for n in source_numbers:
+            if n not in translated_numbers:
+                BACKEND_LOG["kn_translation"] = f"rejected: number {n} did not survive"
+                return text, "en"          # a mangled case number is worse than English
+
+        BACKEND_LOG["kn_translation"] = "verified"
+        return kn, "kn"
+    except Exception as e:
+        BACKEND_LOG["kn_translation"] = f"error: {type(e).__name__}"
+        return text, "en"
+
+
 def route_intent_llm(text, known_intents, timeout=12):
     """
     LLM INTENT ROUTER — the fix for "our conversational AI is a keyword lookup table".

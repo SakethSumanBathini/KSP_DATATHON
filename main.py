@@ -299,6 +299,137 @@ def governance_erasure(person_name):
     return jsonify(RETENTION.erasure_request(person_name))
 
 
+@app.route("/search/person")
+def search_person():
+    """
+    SEARCH BY NAME — because an officer does not think in case IDs. He thinks in PEOPLE.
+
+    THE GAP THIS CLOSES:
+      The search box said "Search by Case ID or Person Name (e.g. Ramesh Gowda)". Typing exactly
+      that returned: "I could not map that to a capability."  There was no name-search route in
+      the entire backend. We invited the officer to do the most natural thing in police work and
+      then told him we did not understand.
+
+    WHY THIS IS NOT JUST A `LIKE '%name%'` QUERY:
+      We already own the best name matcher in the system — the one the whole product is built on.
+      It handles the three things a real search must handle:
+
+        1. TYPOS.        "Ramesh Gowdaa"  -> Ramesh Gowda      (an officer typing fast)
+        2. CROSS-SCRIPT. "ಮಂಜುನಾಥ್"        -> Manjunath Hegde   (Kannada FIR, English query)
+        3. MISHEARING.   Chrome hears "Ramesh Gowda" as "Ramesh Gouda" — same phonetic key.
+
+      A LIKE query fails all three, and those three ARE the job in a bilingual state.
+
+    THE HARD PART — AND THE LINE WE DO NOT CROSS:
+      Search must be FUZZY. Identity resolution must be STRICT. Those are opposite requirements,
+      and it is tempting to reuse one for the other.
+
+      We do not. This endpoint RANKS candidates and shows them to a human. It NEVER merges them.
+      Two men named Ramesh Gowda both appear in the results, separately, with their own case
+      lists — exactly as they exist in the data. The officer sees "3 people match this name" and
+      picks. Nothing is fused, nothing is decided.
+
+      That is the difference between helping someone find a person and quietly deciding, on his
+      behalf and without evidence, that two people are one. The second is the thing this entire
+      product exists to prevent.
+    """
+    q = (request.args.get("q") or "").strip()
+    if not q:
+        return jsonify({"error": "q required"}), 400
+
+    try:
+        from resolve import name_similarity
+        hits = []
+        for a in STORE.all_accused():
+            nm = a.get("AccusedName") or ""
+            if not nm:
+                continue
+            sim = name_similarity(q, nm)          # cross-script + phonetic + typo tolerant
+            if q.lower().strip() == nm.lower().strip():
+                sim = 1.0                         # exact string match outranks everything
+            elif q.lower() in nm.lower():
+                sim = max(sim, 0.97)
+            if sim >= 0.72:                       # below this it is noise, not a near-miss
+                hits.append((sim, a))
+
+        # RANKING MATTERS AS MUCH AS MATCHING.
+        # Searching "Ramesh Gowda" first returned a wall of single-record "Ramesh (34)" entries,
+        # because the token matcher scores a first-name hit at 1.000 — while the man the officer
+        # is actually looking for (the RESOLVED repeat offender, five linked cases) sat below the
+        # fold. Technically every row was a legitimate match. Practically the search was useless.
+        # A correct answer buried under nine irrelevant ones is a wrong answer.
+        # Rank: score, then how much we actually KNOW about the person (linked records, cases).
+        # AND THE TIEBREAK MATTERS AS MUCH AS THE RANK.
+        # "Ramesh Gowdaa" (one typo) surfaced a pile of unrelated ರಮೇಶ್ singles instead of Ramesh
+        # Gowda — because the token matcher scores a FIRST-NAME-ONLY hit at a perfect 1.000, which
+        # ties with, and then out-sorts, a FULL-NAME match carrying one typo. A partial match was
+        # beating a near-complete one. Backwards, and exactly the case a fast-typing officer hits.
+        # So we break ties on raw whole-string closeness: "Ramesh Gowdaa"~"Ramesh Gowda" is 0.96,
+        # while "Ramesh Gowdaa"~"ರಮೇಶ್" is 0.0. Full matches win; partials fall in behind them.
+        # SEARCH IS NOT IDENTITY. Do not rank with the identity matcher.
+        #
+        # "Ramesh Gowdaa" (one fat-fingered key) kept surfacing an unrelated "Ramesh (34)" instead
+        # of the man himself. The cause is subtle and worth stating plainly: our name matcher
+        # contains a SURNAME-DISCIPLINE rule — the rule that stops "Prakash Reddy" merging with
+        # "Prakash Rao" — and it correctly penalises Gowdaa != Gowda. Meanwhile a first-name-only
+        # candidate has no surname to mismatch, so it scores a clean 1.000 and wins.
+        #
+        # The strictness that makes IDENTITY safe makes SEARCH useless. They are opposite jobs:
+        #   identity must refuse on doubt        (a false merge accuses an innocent man)
+        #   search must forgive on doubt         (a missed hit hides a wanted one)
+        # So search gets its own score — transliteration-aware similarity BLENDED with raw
+        # whole-string closeness — while identity keeps the strict matcher, untouched. Reusing one
+        # for the other was the mistake.
+        import difflib
+        def _rank(t):
+            sim, a = t
+            aid = a["AccusedMasterID"]
+            nm  = (a.get("AccusedName") or "").lower()
+            grp = next((g for g in GROUPS if aid in g), None)
+            whole = difflib.SequenceMatcher(None, q.lower(), nm).ratio()
+            blended = sim + whole          # full-name near-misses beat first-name-only exacts
+            return (-blended, -(len(grp) if grp else 1))
+        hits.sort(key=_rank)
+
+        # Group by the identity KAVERI actually resolved — never by name.
+        results, seen = [], set()
+        for sim, a in hits[:40]:
+            aid = a["AccusedMasterID"]
+            ident = next((g for g in GROUPS if aid in g), None)
+            key = tuple(sorted(ident)) if ident else (aid,)
+            if key in seen:
+                continue
+            seen.add(key)
+            # Field is CaseMasterID, not CaseID. Guessed the name, got a 500. Checked the
+            # schema instead of assuming — which is the whole lesson of today, in one line.
+            member_cases = sorted({
+                r["CaseMasterID"] for r in STORE.all_accused() if r["AccusedMasterID"] in key
+            })
+            results.append({
+                "name": a["AccusedName"],
+                "accused_id": aid,          # shown in the UI: two men CAN share a name and age
+                "age": a.get("AgeYear"),
+                "match_score": round(sim, 3),
+                "cases": member_cases,
+                "case_count": len(member_cases),
+                "resolved_identity": bool(ident and len(ident) > 1),
+                "linked_records": len(key),
+            })
+            if len(results) >= 8:
+                break
+
+        return jsonify({
+            "query": q,
+            "matches": results,
+            "count": len(results),
+            "note": ("Ranked candidates for a HUMAN to choose from. Matching a name here does NOT "
+                     "merge anyone: two different men with the same name appear as two separate "
+                     "results, each with their own cases. Search is fuzzy; identity is not."),
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/reasoning/refused")
 def reasoning_refused():
     """
@@ -855,9 +986,24 @@ def converse():
     if learned.get("account"):
         sess.remember(account=learned["account"])
     sess.log(q, ctx, answer)
+    # ANSWER HIM IN THE LANGUAGE HE ASKED IN.
+    # KAVERI detected Kannada and replied in English — and then read that English aloud through a
+    # Kannada speech engine, which is noise, not an accent. Translation is GUARDED: every number
+    # in the English source must survive into the Kannada, unchanged, or we discard the
+    # translation and return English. A mistranslated FIR number, spoken fluently into an
+    # officer's ear in his own language, is far worse than an English sentence he can read.
+    answer_lang = "en"
+    if ctx.get("language") == "kn" and answer:
+        try:
+            from catalyst_services import translate_to_kannada
+            answer, answer_lang = translate_to_kannada(answer)
+        except Exception:
+            answer_lang = "en"        # never let translation take down the answer
+
     return jsonify({"session_id": sid, "language": ctx["language"], "intent": ctx["intent"],
                     "case_id": ctx.get("case_id"), "person_id": ctx.get("person_id"),
                     "answer": answer, "citations": cites, "context_used": provenance,
+                    "answer_language": answer_lang,
                     "routed_by": ctx.get("route_debug"),
                     "turns_in_session": len(sess.turns)})
 

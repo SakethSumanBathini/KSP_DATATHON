@@ -95,13 +95,68 @@ class BurglaryPlaybook:
                 f"Request CDR for shared phone(s) {', '.join(brief['network']['shared_phones'])} — "
                 f"linked across {', '.join('FIR ' + str(c) for c in net['linked_cases'])}.")
         if brief["network"]["shared_vehicles"]:
+            # THIRD INSTANCE OF THE SAME BUG. The narrative leaked a raw Python list; I fixed it.
+            # The CDR line leaked one two lines away; I fixed that too and added a test. The test
+            # only ever ran against case 1 — which has no shared vehicles — so THIS branch never
+            # executed and the test passed VACUOUSLY. A green test that exercises nothing is worse
+            # than no test: it buys false confidence. The test now sweeps all 500 cases.
             brief["recommended_leads"].append(
-                f"Trace vehicle(s) {brief['network']['shared_vehicles']} appearing in linked cases.")
+                f"Trace vehicle(s) {', '.join(brief['network']['shared_vehicles'])} appearing in "
+                f"linked cases.")
         if brief["near_repeat"]:
             nr=brief["near_repeat"][:3]
             brief["recommended_leads"].append(
                 f"Near-repeat pattern: {len(brief['near_repeat'])} burglaries within 400m/42 days "
                 f"(closest: case {nr[0]['case_id']} at {nr[0]['distance_m']}m). Advise patrol density + resident alerts.")
+        # MODUS-OPERANDI LEADS — we were computing these and throwing them away.
+        #
+        # A random sweep of the corpus found that 464 of 500 cases (93%) showed an EMPTY
+        # "Recommended Actions" panel. The officer opens ten cases and nine give him nothing.
+        #
+        # But the system was NOT ignorant of those cases — it was SILENT about them. Case 58 had
+        # FIVE cases matching its modus operandi (FIR 103 at 0.578, FIR 254 at 0.371) sitting
+        # right there in the brief, and the lead generator never looked at them. It only fired on
+        # shared phones, near-repeat geography, or a resolved repeat offender — the three things
+        # that happen to be rare.
+        #
+        # Knowing something and not saying it is the same, to the officer, as not knowing it.
+        if brief.get("similar_cases"):
+            sc = brief["similar_cases"][:3]
+            refs = ", ".join(f"FIR {s['case_id']} ({s['score']:.2f})" for s in sc)
+            brief["recommended_leads"].append(
+                f"Modus operandi matches {len(brief['similar_cases'])} other case(s): {refs}. "
+                f"Compare entry method and timing — a common offender is possible but NOT "
+                f"established; no shared evidence links these cases yet.")
+
+        # UNLINKED EVIDENCE — the single most common thing we were sitting on.
+        #
+        # Case 58 has a phone number written in the FIR: +917830911730. It links to no other case,
+        # so `shared_phones` was empty, so no lead fired, so the officer was shown an empty panel.
+        # The number was in our graph the whole time. 323 of 500 cases have physical evidence like
+        # this that we were never mentioning.
+        #
+        # AN UNLINKED NUMBER IS NOT A CLEARED NUMBER. It is the first thing an investigating
+        # officer would chase, and the fact that our graph cannot yet connect it to anything is a
+        # statement about OUR data, not about the suspect.
+        try:
+            own = [n for n in self.graph.g.neighbors(f"FIR:{case_id}")
+                   if n.startswith("Phone:") or n.startswith("Vehicle:")]
+            unlinked_ph = [n.split(":", 1)[1] for n in own if n.startswith("Phone:")
+                           if n.split(":", 1)[1] not in brief["network"]["shared_phones"]]
+            unlinked_ve = [n.split(":", 1)[1] for n in own if n.startswith("Vehicle:")
+                           if n.split(":", 1)[1] not in brief["network"]["shared_vehicles"]]
+            if unlinked_ph:
+                brief["recommended_leads"].append(
+                    f"Phone(s) {', '.join(unlinked_ph)} appear in this FIR but link to no other "
+                    f"case in the database. Request CDR — an unlinked number is not a cleared "
+                    f"number.")
+            if unlinked_ve:
+                brief["recommended_leads"].append(
+                    f"Vehicle(s) {', '.join(unlinked_ve)} appear in this FIR but link to no other "
+                    f"case. Run an RTO trace and check ANPR for the incident window.")
+        except Exception:
+            pass          # graph shape must never take down a briefing
+
         # resolved repeat offenders
         repeat=[a for a in net["accused"] if a["identity"].startswith("Identity:")]
         if repeat:
@@ -110,6 +165,28 @@ class BurglaryPlaybook:
                 if len(members)>1:
                     brief["recommended_leads"].append(
                         f"Accused '{a['name']}' is a resolved repeat offender ({len(members)} linked cases) — prioritize.")
+
+        # NEVER SHOW AN OFFICER A BLANK PANEL.
+        #
+        # 464 of 500 cases returned an empty "Recommended Actions" box. To an investigating officer
+        # a blank panel says ONE thing: this tool is useless. It does not say "I searched the whole
+        # database and found no cross-case links" — which is a genuine, valuable investigative
+        # finding, and the truth.
+        #
+        # Silence and "I checked, and there is nothing" are the same pixels and completely
+        # different messages. An analyst who says nothing is worthless; an analyst who says "no
+        # links found, here is what I checked" has done his job. State the negative result.
+        if not brief["recommended_leads"]:
+            checked = []
+            checked.append(f"{len(brief.get('similar_cases') or [])} modus-operandi comparisons")
+            checked.append("shared phones and vehicles across all 500 FIRs")
+            checked.append("near-repeat geography (400m / 42 days)")
+            checked.append("cross-case identity resolution")
+            brief["recommended_leads"].append(
+                "No cross-case links found. KAVERI checked " + "; ".join(checked) +
+                " — and this FIR connects to none of them. That is a finding, not a gap: treat "
+                "this as an isolated incident unless new evidence (a phone, a vehicle, a name) "
+                "emerges. Re-run this briefing when it does.")
 
         brief["citations"]=sorted(brief["citations"])
         self.audit.record(user, role, f"investigate case {case_id}", "playbook",

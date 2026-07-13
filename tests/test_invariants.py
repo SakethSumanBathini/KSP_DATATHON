@@ -353,15 +353,44 @@ def main():
     # Brackets and quote marks are not evidence; they are a leaked data structure, sitting in an
     # instruction a police officer is expected to carry out. Fixing an INSTANCE does not fix a
     # CLASS — so this test greps every officer-facing surface for the signature of a container.
-    print("\n--- NEW: officer-facing text is prose, never a leaked Python object ---")
+    print("\n--- NEW: officer-facing text is prose, never a leaked Python object (ALL 500 cases) ---")
     from playbook import BurglaryPlaybook
     _m, _rv, _rl, _groups, _p = resolve(store, graph)
-    _brief = BurglaryPlaybook(store, graph, _groups).investigate(1)
-    _surfaces = list(_brief.get("recommended_leads", [])) + list(_brief.get("sections", []))
-    _leaks = [t for t in _surfaces
-              if ("['" in t) or ('", "' in t) or ("{'" in t) or ("', '" in t)]
-    check("no recommended action contains a raw Python list/dict", not _leaks)
-    check("action items were actually generated (test is not vacuous)", len(_surfaces) > 0)
+    _pb = BurglaryPlaybook(store, graph, _groups)
+
+    # THIS TEST USED TO CHECK ONE CASE, AND THAT WAS WORSE THAN USELESS.
+    # I fixed a raw-list leak in the narrative, fixed a second one in the CDR lead, wrote this
+    # test, and declared the CLASS of bug closed. Then a random sweep found a THIRD leak — in the
+    # shared_vehicles lead — because case 1 has no shared vehicles, so that branch never executed
+    # and this test passed VACUOUSLY. A green test that exercises nothing buys false confidence:
+    # it is a lie that looks like proof. Sweep every case, and assert every branch actually ran.
+    _leaks, _n_leads, _branches = [], 0, set()
+    for _cid in range(1, 501):
+        _b = _pb.investigate(_cid)
+        _txts = list(_b.get("recommended_leads", [])) + list(_b.get("sections", []))
+        _n_leads += len(_b.get("recommended_leads", []))
+        for _t in _txts:
+            if ("['" in _t) or ("', '" in _t) or ('", "' in _t) or ("{'" in _t):
+                _leaks.append(f"case {_cid}: {_t[:60]}")
+            if "Request CDR for shared" in _t: _branches.add("shared_phone")
+            if "Trace vehicle"          in _t: _branches.add("shared_vehicle")
+            if "Modus operandi matches" in _t: _branches.add("mo")
+            if "link to no other case"  in _t: _branches.add("unlinked_evidence")
+            if "repeat offender"        in _t: _branches.add("repeat_offender")
+            if "No cross-case links"    in _t: _branches.add("nothing_found")
+    check("NO raw Python list/dict in any officer-facing text, across all 500 cases", not _leaks)
+    if _leaks:
+        for _l in _leaks[:3]: print("      LEAK:", _l)
+    check("test is NOT vacuous: leads were generated", _n_leads > 500)
+    check("the shared_vehicle branch actually executed (the one that hid the 3rd leak)",
+          "shared_vehicle" in _branches)
+    check("every lead branch was exercised", len(_branches) >= 5)
+
+    # NEVER a blank Recommended Actions panel. 464/500 cases used to show nothing at all — to an
+    # officer a blank panel says "this tool is useless", not "I searched and found no links".
+    _empty = [cid for cid in range(1, 501)
+              if not _pb.investigate(cid).get("recommended_leads")]
+    check("NO case shows an empty Recommended Actions panel (was 464/500)", not _empty)
 
     # ── NEW: the Kannada translation guard — a mangled FIR number must never reach an officer ──
     # We have ALREADY caught this model inflating a man's record from 7 cases to 13, in production.

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, Shield, AlertTriangle, Search, Mic, CheckCircle2, Database, Users, Activity, Fingerprint, Square } from 'lucide-react';
+import { LayoutDashboard, Shield, AlertTriangle, Search, Mic, CheckCircle2, Database, Users, Activity, Fingerprint, Square, CornerDownLeft, Volume2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { IdentityResolutionView } from './IdentityResolutionView';
@@ -123,6 +123,12 @@ function caseNumberIn(text: string): string | null {
 
 export default function App() {
   const [data, setData] = useState<InvestigationData | null>(null);
+  const currentCase = useRef<number | null>(null);   // the case the officer is LOOKING at
+  const [people, setPeople] = useState<any[] | null>(null);   // name-search results
+  const [speaking, setSpeaking] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);   // informational, NOT an error
+  const fallbackEn = useRef<string>('');                        // English text for TTS fallback
+  const declaredLang = useRef<string | null>(null);            // language the BACKEND declared
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
@@ -131,6 +137,7 @@ export default function App() {
   const recognitionRef = useRef<any>(null);
   const transcriptRef = useRef('');           // FIX 3: live transcript, not a stale closure
   const silenceRef = useRef<any>(null);
+  const [lang, setLang] = useState<'kn-IN' | 'en-IN'>('en-IN');   // BUG 2/3: was hardcoded kn-IN
   const [activeView, setActiveView] = useState('Identity Resolution');
   const [activeTab, setActiveTab] = useState('Crime Network');
 
@@ -142,27 +149,96 @@ export default function App() {
 
   const executeSearch = async (text: string) => {
     if (!text.trim()) return;
+
+    // BUG 1 — THE SEARCH WORKED AND YOU COULD NOT SEE IT.
+    // The search box lives in the header, so it is visible on EVERY tab. But the result renders
+    // only inside the Investigation Workspace. Typing "1" on the Identity Resolution tab fetched
+    // the case correctly, set state correctly, and painted it into a view nobody was looking at.
+    // It looked exactly like "Enter does nothing". A silent SUCCESS is as dangerous as a silent
+    // failure — both leave the officer with no idea what the machine just did.
+    setActiveView('Investigation Workspace');
+
     setLoading(true);
     setError(null);
+    setNotice(null);
 
     const caseId = caseNumberIn(text);        // FIX 2: understands ಒಂದು / ಉಂಡು / "one" / "1"
 
+    // NAME SEARCH — officers think in PEOPLE, not case IDs.
+    // The box literally said "or Person Name (e.g. Ramesh Gowda)" and typing exactly that
+    // returned "I could not map that to a capability." There was no name route at all. It now
+    // hits /search/person, which is typo-tolerant and cross-script: "Rameshh Gowdaa" and
+    // "ಮಂಜುನಾಥ್" both find the right man. Note what it does NOT do — it never merges two people
+    // who share a name. It ranks candidates and a human picks.
+    const looksLikeName = !caseId && /^[\p{L}][\p{L}\s.']{2,40}$/u.test(text.trim())
+                          && text.trim().split(/\s+/).length <= 4;
+
     try {
+      if (looksLikeName) {
+        const r = await apiFetch(`/search/person?q=${encodeURIComponent(text.trim())}`);
+        if (r.matches?.length) { setPeople(r.matches); setLoading(false); return; }
+        // no name hits -> fall through and let the conversational layer try
+      }
+      setPeople(null);
+
       if (caseId) {
-        const d = await apiFetch(`/investigate/${caseId}`);
+        // THE TOGGLE HAD NO EFFECT HERE — AND THIS IS THE PATH HE USES MOST.
+        // /converse honoured prefer_language. /investigate never even looked at it. So an officer
+        // who switched to Kannada and typed a case number — the commonest action in the entire
+        // product — got an English briefing and no explanation. The switch was not broken; it was
+        // decorative on the one screen that matters, which is worse, because he cannot tell
+        // whether we ignored him or simply have no Kannada.
+        const d = await apiFetch(`/investigate/${caseId}?lang=${lang === 'kn-IN' ? 'kn' : 'en'}`);
+        currentCase.current = Number(caseId);      // the screen is now the context
         setData(d);
+        fallbackEn.current = d?.narrative_en || d?.narrative || '';
+        declaredLang.current = d?.narrative_language || 'en';   // the backend TELLS us. Believe it.
+        if (d?.narrative) speak(d.narrative);      // hands full, eyes up
       } else {
         const d = await apiFetch('/converse', {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain' },   // text/plain avoids the CORS pre-flight
-          body: JSON.stringify({ session_id: 'web', query: text, role: 'station_officer' }),
+          // THE SCREEN IS THE CONTEXT.
+          // Without this, an officer looking at case 1 who asks "who was this guy running with"
+          // was told "Which case should I analyse? (no case in context)". /investigate is a GET
+          // that never touched the conversation session, and /converse reads that session — two
+          // paths that never spoke. The machine was staring at the case and claiming not to see
+          // it. We now send whatever is on screen. The clarifying question still fires when there
+          // is genuinely nothing there; we did not weaken "ask, never guess" — we stopped
+          // pretending we were blind.
+          body: JSON.stringify({
+            session_id: 'web',
+            query: text,
+            role: 'station_officer',
+            case_id: currentCase.current,
+            // The toggle is a STANDING instruction: if it says KN, brief me in Kannada even when
+            // I type the case number in Latin digits. And if I actually WRITE Kannada, that wins
+            // regardless of the toggle — what I typed is stronger evidence than a switch I set an
+            // hour ago. The backend applies: (query is Kannada) OR (toggle is KN).
+            prefer_language: lang === 'kn-IN' ? 'kn' : 'en',
+          }),
         });
-        setData({
-          case_id: d.case_id ?? '—',
+        // MERGE, DO NOT REPLACE.
+        //
+        // Bug found by using it: the officer loads case 1 — full briefing, crime network graph,
+        // near-repeat count, similar-MO count. He asks ONE follow-up question, and the entire
+        // case board goes blank: "No network yet. Investigate a case." Every counter resets to 0.
+        //
+        // Cause: /converse returns an ANSWER, not a case. setData({...}) built a brand-new object
+        // from that answer, silently destroying the network, similar_cases and near_repeat that
+        // /investigate had loaded. The data was never wrong — it was thrown away.
+        //
+        // An investigation ACCUMULATES context. It does not reset every time you open your mouth.
+        fallbackEn.current = d.answer_en || d.answer || '';   // English to SPEAK if no KN voice
+        declaredLang.current = d.answer_language || 'en';
+        if (d.answer) speak(d.answer);
+        setData(prev => ({
+          ...(prev ?? {} as InvestigationData),
+          case_id: d.case_id ?? prev?.case_id ?? (currentCase.current ? String(currentCase.current) : '—'),
           narrative: d.answer || d.narrative || d.clarification_needed || 'No answer returned.',
           narrative_source: d.narrative_source,
-          citations: d.citations,
-        });
+          citations: d.citations ?? prev?.citations,
+        }));
       }
     } catch (e: any) {
       // FIX 4: NOT swallowed. The officer sees the failure.
@@ -172,7 +248,133 @@ export default function App() {
     }
   };
 
+  /* ════════════════════════════════════════════════════════════════════════════════════════
+   *  TEXT-TO-SPEECH — and the Kannada bug that made it read ONLY THE NUMBERS
+   * ════════════════════════════════════════════════════════════════════════════════════════
+   *
+   *  SYMPTOM: a Kannada briefing was spoken as "one... two... three..." — the digits, and
+   *  nothing else. Every Kannada word silent.
+   *
+   *  CAUSE — three mistakes stacked:
+   *
+   *    1. I set utterance.lang = 'kn-IN' and NEVER CHECKED WHETHER A KANNADA VOICE EXISTS.
+   *       Chrome on Windows usually has none. It silently falls back to the English engine,
+   *       which is then handed Kannada script it has no phonemes for. It skips every glyph it
+   *       cannot pronounce — and reads the only thing it recognises: the numbers.
+   *
+   *    2. speechSynthesis.getVoices() is ASYNCHRONOUS. It returns [] on the first call, before
+   *       the voice list loads. Anyone testing it once, early, sees "no voices" and moves on.
+   *
+   *    3. Setting .lang alone is NOT ENOUGH. Chrome largely ignores it unless you assign an
+   *       actual SpeechSynthesisVoice object to .voice.
+   *
+   *  THE FIX, AND THE PRINCIPLE:
+   *    Wait for the voice list. Find a real Kannada voice. Assign the voice OBJECT.
+   *    And if there ISN'T one — SAY SO. Do not mumble a row of digits at a police officer and
+   *    let him think the system is broken, or worse, that those numbers were the whole message.
+   *    A tool that cannot do something must announce it. Silence is the one unacceptable answer.
+   * ════════════════════════════════════════════════════════════════════════════════════════ */
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+
+  useEffect(() => {
+    if (!('speechSynthesis' in window)) return;
+    const load = () => setVoices(window.speechSynthesis.getVoices());
+    load();                                              // may be [] on first call...
+    window.speechSynthesis.onvoiceschanged = load;       // ...so listen for the real list
+    return () => { window.speechSynthesis.onvoiceschanged = null; };
+  }, []);
+
+  /** Find a real voice for a language. Returns null if the browser genuinely has none. */
+  const pickVoice = (want: 'kn' | 'en'): SpeechSynthesisVoice | null => {
+    if (!voices.length) return null;
+    if (want === 'kn') {
+      return voices.find(v => v.lang?.toLowerCase().startsWith('kn'))
+          ?? voices.find(v => /kannada/i.test(v.name))
+          ?? null;                                       // no Kannada voice on this machine
+    }
+    return voices.find(v => v.lang === 'en-IN')
+        ?? voices.find(v => v.lang?.toLowerCase().startsWith('en'))
+        ?? voices[0] ?? null;
+  };
+
+  const speak = (text: string) => {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+
+    const clean = text.replace(/[*#_`]/g, '').replace(/\s+/g, ' ').trim();
+    if (!clean) return;
+
+    // Speak the language of the TEXT, not the language of the toggle. Reading English words
+    // through a Kannada engine (or vice versa) produces noise, not an accent.
+    // IS THIS A KANNADA BRIEFING, OR AN ENGLISH ONE ABOUT A MAN WITH A KANNADA NAME?
+    //
+    // This used to ask: does the text contain ANY Kannada character? Case 3's accused is called
+    // ಮಂಜುನಾಥ್. His name sits inside an otherwise entirely English briefing. So the test said
+    // "Kannada", the browser found no Kannada voice, and the officer was shown:
+    //
+    //     "No Kannada voice is installed... The Kannada text above is complete and correct."
+    //
+    // The text above was ENGLISH. The notice was false — a confident, well-formatted statement
+    // about the screen that was wrong about the screen. One Kannada proper noun does not make an
+    // English sentence Kannada.
+    //
+    // Two fixes: BELIEVE THE BACKEND when it declares the language (it knows — it did or did not
+    // translate), and where it hasn't, measure the PROPORTION of Kannada letters rather than
+    // asking whether a single one exists.
+    const letters = clean.replace(/[^\p{L}]/gu, '');
+    const knChars = (clean.match(/[\u0C80-\u0CFF]/g) || []).length;
+    const knRatio = letters.length ? knChars / letters.length : 0;
+    const isKannada = declaredLang.current === 'kn'
+                      || (declaredLang.current == null && knRatio > 0.35);
+    const voice = pickVoice(isKannada ? 'kn' : 'en');
+
+    // NO KANNADA VOICE ON THIS MACHINE -> SPEAK THE ENGLISH. NEVER MUMBLE DIGITS.
+    //
+    // Windows ships no Kannada TTS voice, and neither will the judge's laptop. Handing Kannada
+    // script to an English speech engine does not fail loudly — it SKIPS EVERY WORD IT CANNOT
+    // PRONOUNCE and reads the numbers. The officer hears "one... two... three..." in a confident
+    // voice, with the entire meaning removed. He concludes the tool is broken, or that those
+    // numbers were the message.
+    //
+    // So: show the Kannada he asked for. Speak the English the machine can actually pronounce.
+    // Tell him which is which. Degrading gracefully means saying what you did — not going quiet
+    // and not making a fluent noise.
+    if (isKannada && !voice) {
+      const spoken = fallbackEn.current;
+      if (spoken) {
+        setNotice('No Kannada voice is installed on this device, so the briefing is being read aloud in English. The Kannada text above is complete and correct.');
+        const enVoice = pickVoice('en');
+        const enChunks = spoken.replace(/[*#_`]/g, '').match(/[^.!?]+[.!?]*/g) ?? [spoken];
+        setSpeaking(true);
+        enChunks.forEach((chunk, i) => {
+          const u = new SpeechSynthesisUtterance(chunk.trim());
+          if (enVoice) u.voice = enVoice;
+          u.lang = 'en-IN';
+          u.rate = 0.98;
+          if (i === enChunks.length - 1) u.onend = () => setSpeaking(false);
+          window.speechSynthesis.speak(u);
+        });
+      } else {
+        setNotice('No Kannada voice is installed on this device. The Kannada text above is complete and correct, but cannot be read aloud.');
+        setSpeaking(false);
+      }
+      return;      // NEVER hand Kannada script to an English engine. It reads only the digits.
+    }
+
+    const chunks = clean.match(/[^.!?]+[.!?]*/g) ?? [clean];
+    setSpeaking(true);
+    chunks.forEach((chunk, i) => {
+      const u = new SpeechSynthesisUtterance(chunk.trim());
+      if (voice) u.voice = voice;                        // assign the OBJECT, not just .lang
+      u.lang = isKannada ? 'kn-IN' : 'en-IN';
+      u.rate = 0.98;
+      if (i === chunks.length - 1) u.onend = () => setSpeaking(false);
+      window.speechSynthesis.speak(u);
+    });
+  };
+
   const stopAll = () => {
+    setSpeaking(false);
     clearTimeout(silenceRef.current);
     try { recognitionRef.current?.abort(); } catch { /* already stopped */ }
     try { window.speechSynthesis?.cancel(); } catch { /* not supported */ }
@@ -187,7 +389,7 @@ export default function App() {
 
     transcriptRef.current = '';
     const rec = new SR();
-    rec.lang = 'kn-IN';
+    rec.lang = lang;                    // BUG 3: follows the KN/EN toggle now
     rec.continuous = true;         // stay open across natural pauses
     rec.interimResults = true;
 
@@ -267,24 +469,44 @@ export default function App() {
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && executeSearch(query)}
-                placeholder="Case ID (e.g. 1), or speak in Kannada (ಪ್ರಕರಣ ಒಂದು)…"
+                placeholder="Type a case number and press Enter — or ask a question. Mic speaks KN/EN."
                 className="w-full bg-bg-surface border border-border-subtle rounded-md pl-10 pr-20 py-2 text-sm text-text-primary focus:ring-1 focus:ring-brand-accent focus:outline-none transition-all"
               />
               {listening && (
-                <button onClick={stopAll} className="absolute right-10 p-1.5 rounded-md text-status-critical bg-status-critical/10" title="Stop">
+                <button onClick={stopAll} className="absolute right-[68px] p-1.5 rounded-md text-status-critical bg-status-critical/10" title="Stop listening">
                   <Square size={14} />
                 </button>
               )}
               <button
                 onClick={handleMic}
-                className={`absolute right-2 p-1.5 rounded-md transition-colors ${listening ? 'text-status-critical bg-status-critical/10 animate-pulse' : 'text-text-muted hover:text-text-primary'}`}
+                title={lang === 'kn-IN' ? 'Speak in Kannada' : 'Speak in English'}
+                className={`absolute right-9 p-1.5 rounded-md transition-colors ${listening ? 'text-status-critical bg-status-critical/10 animate-pulse' : 'text-text-muted hover:text-text-primary'}`}
               >
                 <Mic size={16} />
+              </button>
+              {/* BUG 4: there was no way to submit with a mouse. */}
+              <button
+                onClick={() => executeSearch(query)}
+                disabled={!query.trim()}
+                title="Search (Enter)"
+                className="absolute right-2 p-1.5 rounded-md text-text-muted hover:text-brand-accent disabled:opacity-30 transition-colors"
+              >
+                <CornerDownLeft size={16} />
               </button>
             </div>
           </div>
           <div className="flex items-center gap-4 text-xs font-medium text-text-secondary">
-            <span>KN / EN</span>
+            {/* BUG 2: "KN / EN" was decorative TEXT. It is now the switch that actually drives
+                speech recognition — which is why the mic only ever heard Kannada. */}
+            <button
+              onClick={() => setLang(l => (l === 'kn-IN' ? 'en-IN' : 'kn-IN'))}
+              title="Switch voice recognition language"
+              className="px-2 py-1 rounded border border-border-subtle hover:border-brand-accent transition-colors"
+            >
+              <span className={lang === 'kn-IN' ? 'text-brand-accent font-bold' : 'text-text-muted'}>KN</span>
+              <span className="mx-1 text-text-muted">/</span>
+              <span className={lang === 'en-IN' ? 'text-brand-accent font-bold' : 'text-text-muted'}>EN</span>
+            </button>
             <span>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
           </div>
         </header>
@@ -306,6 +528,48 @@ export default function App() {
                   </div>
                 )}
 
+                {notice && (
+                  <div className="max-w-3xl mx-auto mb-6 border border-brand-accent/40 bg-brand-accent/5 rounded p-3 flex items-start gap-3">
+                    <Volume2 size={16} className="text-brand-accent shrink-0 mt-0.5" />
+                    <div className="text-xs text-text-secondary">{notice}</div>
+                  </div>
+                )}
+
+                {/* NAME SEARCH RESULTS — candidates for a human to choose from.
+                    Two different men with the same name appear as TWO rows, each with their own
+                    cases. We rank; we never merge. */}
+                {people && !loading && (
+                  <div className="max-w-3xl mx-auto mb-8">
+                    <h3 className="text-xs font-semibold uppercase text-text-muted mb-3">
+                      {people.length} person(s) match — select one
+                    </h3>
+                    <div className="space-y-2">
+                      {people.map((p: any) => (
+                        <button key={p.accused_id}
+                          onClick={() => { setPeople(null); executeSearch(String(p.cases[0])); }}
+                          className="w-full text-left bg-bg-surface border border-border-subtle hover:border-brand-accent rounded p-4 transition-colors">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-text-primary font-medium">{p.name}</span>
+                            <span className="text-[10px] font-mono text-text-muted">match {p.match_score}</span>
+                          </div>
+                          <div className="text-xs text-text-secondary">
+                            age {p.age ?? '—'} · {p.case_count} case(s): {p.cases.slice(0, 6).join(', ')}
+                            {p.resolved_identity && (
+                              <span className="ml-2 text-status-success font-semibold">
+                                ★ resolved across {p.linked_records} records
+                              </span>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-text-muted mt-3 italic">
+                      Two people can share a name. They are listed separately — KAVERI ranks candidates,
+                      it never merges them.
+                    </p>
+                  </div>
+                )}
+
                 {loading ? (
                   <div className="flex items-center justify-center h-full text-text-muted text-sm">
                     Analysing… (first request after idle can take ~10s)
@@ -323,6 +587,16 @@ export default function App() {
                           </div>
                         )}
                       </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => (speaking ? stopAll() : speak(data.narrative || ''))}
+                          title={speaking ? 'Stop reading' : 'Read this briefing aloud'}
+                          className={`p-2 rounded border transition-colors ${speaking
+                            ? 'border-status-critical text-status-critical bg-status-critical/10'
+                            : 'border-border-subtle text-text-muted hover:text-text-primary'}`}
+                        >
+                          {speaking ? <Square size={14} /> : <Volume2 size={14} />}
+                        </button>
                       {data.narrative_source === 'catalyst_glm' ? (
                         <div className="flex items-center gap-2 bg-status-success/10 border border-status-success/30 px-3 py-1.5 rounded text-status-success text-xs font-semibold shrink-0">
                           <Shield size={14} /> Catalyst GLM-4.7 · Hallucination Guarded
@@ -332,6 +606,7 @@ export default function App() {
                           <AlertTriangle size={14} /> Deterministic Template
                         </div>
                       )}
+                      </div>
                     </div>
 
                     <div className="prose prose-invert prose-sm max-w-none text-text-secondary leading-relaxed">

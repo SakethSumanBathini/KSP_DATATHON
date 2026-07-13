@@ -319,7 +319,7 @@ So voice runs on the **browser Web Speech API** (Kannada, `kn-IN`).
 
 ## The system
 
-**23 components · 30 API routes · 67 tests, all passing**
+**23 components · 32 API routes · 87 tests, all passing**
 
 | Component | What it does |
 |:---|:---|
@@ -338,7 +338,7 @@ So voice runs on the **browser Web Speech API** (Kannada, `kn-IN`).
 
 ## Every bug we ever shipped has a test that catches it now
 
-`tests/test_invariants.py` — **67 assertions, standard library only.**
+`tests/test_invariants.py` — **87 assertions, standard library only.**
 
 Including **three we caused while fixing the name matcher**, and caught:
 
@@ -355,7 +355,7 @@ Including **three we caused while fixing the name matcher**, and caught:
 ```bash
 python3 main.py                        # the whole system, port 9000
 
-python3 tests/test_invariants.py       # 67 tests
+python3 tests/test_invariants.py       # 87 tests
 python3 tests/steelman_benchmark.py    # KAVERI vs a REAL fuzzy matcher
 python3 tests/cross_validation.py      # 7 unseen corpora — the overfitting test
 python3 tests/adversarial_benchmark.py # held-out adversarial pairs

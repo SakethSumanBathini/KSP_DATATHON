@@ -301,6 +301,26 @@ def governance_erasure(person_name):
 
 @app.route("/search/person")
 def search_person():
+    # THE MAIN DATA ENDPOINTS OF A POLICE SYSTEM WERE OPEN TO THE WORLD.
+    #
+    # An hour ago I ran a "route-by-route security sweep", found /identity/<id> serving names with
+    # no token, gated it, and reported: "NO route serves a suspect name without a token."
+    #
+    # That sweep covered the routes I had NEVER tested. It skipped the ones I HAD — because I had
+    # tested them for CORRECTNESS and quietly assumed that meant AUTH too. So the four biggest
+    # endpoints in the product — the briefing, the chat, the name search, and the refused-merge
+    # panel — were never checked, and every one of them handed accused names, phone numbers and
+    # case links to an anonymous caller.
+    #
+    # The frontend has been sending a token on every request the whole time (api.ts appends it).
+    # The backend simply never looked. The cost of this fix is zero and the exposure was total.
+    #
+    # Third time the same blind spot: coverage measured by what I remembered checking, not by what
+    # exists. "I tested that endpoint" is not the same sentence as "I tested that endpoint for the
+    # thing that is now going wrong."
+    claims, _v = _caller()
+    if claims is None:
+        return _unauth()
     """
     SEARCH BY NAME — because an officer does not think in case IDs. He thinks in PEOPLE.
 
@@ -523,6 +543,26 @@ def search_person():
 
 @app.route("/reasoning/refused")
 def reasoning_refused():
+    # THE MAIN DATA ENDPOINTS OF A POLICE SYSTEM WERE OPEN TO THE WORLD.
+    #
+    # An hour ago I ran a "route-by-route security sweep", found /identity/<id> serving names with
+    # no token, gated it, and reported: "NO route serves a suspect name without a token."
+    #
+    # That sweep covered the routes I had NEVER tested. It skipped the ones I HAD — because I had
+    # tested them for CORRECTNESS and quietly assumed that meant AUTH too. So the four biggest
+    # endpoints in the product — the briefing, the chat, the name search, and the refused-merge
+    # panel — were never checked, and every one of them handed accused names, phone numbers and
+    # case links to an anonymous caller.
+    #
+    # The frontend has been sending a token on every request the whole time (api.ts appends it).
+    # The backend simply never looked. The cost of this fix is zero and the exposure was total.
+    #
+    # Third time the same blind spot: coverage measured by what I remembered checking, not by what
+    # exists. "I tested that endpoint" is not the same sentence as "I tested that endpoint for the
+    # thing that is now going wrong."
+    claims, _v = _caller()
+    if claims is None:
+        return _unauth()
     """
     THE OTHER HALF OF THE MOAT — and the half nobody ever builds.
 
@@ -1029,12 +1069,16 @@ def converse():
     # demo convenience AND is clamped to the lowest privilege (station_officer) — it can never
     # escalate. No token + no body role => station_officer. There is no path to elevated data
     # without a signed token.
+    # ...AND THE SAME AUDIT FOUND THE REST OF THE HOLE.
+    # Clamping the body role stopped ESCALATION, but an anonymous caller with no token at all still
+    # got station_officer data — which includes accused names, phones and cross-case links. Half a
+    # fix. The data layer is the authorization boundary or it is nothing: no token, no data.
+    # The frontend has always sent a token (api.ts appends it to every request), so this costs the
+    # product nothing and closes the exposure completely.
     claims, _visible = _caller()
-    if claims:
-        role = claims["role"]
-    else:
-        requested = body.get("role", "station_officer")
-        role = requested if requested == "station_officer" else "station_officer"
+    if claims is None:
+        return _unauth()
+    role = claims["role"]
     if not q:
         return jsonify({"error": "query required"}), 400
 
@@ -1440,6 +1484,26 @@ def query():
 
 @app.route("/investigate/<int:case_id>")
 def investigate(case_id):
+    # THE MAIN DATA ENDPOINTS OF A POLICE SYSTEM WERE OPEN TO THE WORLD.
+    #
+    # An hour ago I ran a "route-by-route security sweep", found /identity/<id> serving names with
+    # no token, gated it, and reported: "NO route serves a suspect name without a token."
+    #
+    # That sweep covered the routes I had NEVER tested. It skipped the ones I HAD — because I had
+    # tested them for CORRECTNESS and quietly assumed that meant AUTH too. So the four biggest
+    # endpoints in the product — the briefing, the chat, the name search, and the refused-merge
+    # panel — were never checked, and every one of them handed accused names, phone numbers and
+    # case links to an anonymous caller.
+    #
+    # The frontend has been sending a token on every request the whole time (api.ts appends it).
+    # The backend simply never looked. The cost of this fix is zero and the exposure was total.
+    #
+    # Third time the same blind spot: coverage measured by what I remembered checking, not by what
+    # exists. "I tested that endpoint" is not the same sentence as "I tested that endpoint for the
+    # thing that is now going wrong."
+    claims, _v = _caller()
+    if claims is None:
+        return _unauth()
     try:
         if not STORE.get_case(case_id):
             return jsonify({"error": f"case {case_id} not found"}), 404

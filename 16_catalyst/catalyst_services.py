@@ -228,13 +228,21 @@ def translate_to_kannada(text, timeout=20):
 
     system = (
         "You are a translator for the Karnataka State Police. Translate the officer's briefing "
-        "from English into natural, professional Kannada.\n"
+        "from English into natural, professional Kannada as a serving police officer would write "
+        "it.\n"
         "ABSOLUTE RULES:\n"
         "1. Every number, FIR number, phone number, date, distance and count must be reproduced "
         "EXACTLY as it appears. Never change, round, drop or add a number.\n"
         "2. Keep proper names and phone numbers in their original form.\n"
-        "3. Translate ONLY. Add no facts, no commentary, no opinions.\n"
-        "4. Output the Kannada translation and nothing else."
+        "3. POLICE TERMINOLOGY — use the words an officer actually uses:\n"
+        "   - 'FIR' is an ACRONYM (First Information Report). Write it as ಎಫ್\u200cಐಆರ್ — the "
+        "letters F-I-R. NEVER write ಫೈರ್, which reads as the English word 'fire'.\n"
+        "   - 'case'    -> ಪ್ರಕರಣ\n"
+        "   - 'accused' -> ಆರೋಪಿ\n"
+        "   - 'evidence'-> ಸಾಕ್ಷ್ಯ\n"
+        "   - 'burglary'-> ಕಳ್ಳತನ\n"
+        "4. Translate ONLY. Add no facts, no commentary, no opinions.\n"
+        "5. Output the Kannada translation and nothing else."
     )
     try:
         out = _glm_chat([{"role": "system", "content": system},
@@ -248,6 +256,14 @@ def translate_to_kannada(text, timeout=20):
         kn_chars = sum(1 for ch in kn if "\u0c80" <= ch <= "\u0cff")
         if kn_chars < 5:
             return text, "en"
+
+        # DETERMINISTIC TERMINOLOGY REPAIR.
+        # The model rendered the acronym FIR as ಫೈರ್ — which a Kannada speaker reads as the
+        # English word "FIRE". An officer would see "FIRE 1, FIRE 2, FIRE 3" in a police briefing.
+        # The numbers were perfect and the terminology was embarrassing, which is its own lesson:
+        # a guard that only checks numbers only catches number errors. We instruct the model AND
+        # repair the output — never rely on a prompt alone for something a judge will read.
+        kn = kn.replace("ಫೈರ್", "ಎಫ್\u200cಐಆರ್").replace("ಫೈರ", "ಎಫ್\u200cಐಆರ್")
 
         # 3. THE GUARD. Every number from the source must survive, unchanged.
         translated_numbers = re.findall(r"\d+", kn)

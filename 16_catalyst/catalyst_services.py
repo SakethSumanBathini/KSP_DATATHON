@@ -267,13 +267,24 @@ def translate_to_kannada_chunked(text, timeout=24):
         src_nums = _re.findall(r'\d+', src_line)
         if cand:
             kn_nums = _re.findall(r'\d+', cand)
-            if kn_nums == src_nums:
+            # THE GUARD CHECKED NUMBERS AND NOTHING ELSE — SO A TRUNCATED LINE PASSED.
+            # Live output: "ಪಾಟ್ರುಲ್ ಸಾಂದ್ರತೆ ಹೆಚ್ಚಿಸಿ ಮತ್ತು" — "increase patrol density and" —
+            # and then it simply stopped. The source line ("Advise patrol density + resident
+            # alerts.") contains no digits at all, so the number check compared [] to [] and
+            # waved it through. An officer was handed a sentence that ended in the middle of a
+            # conjunction.
+            # A guard that checks one property only catches failures of that property. Numbers
+            # intact is necessary, not sufficient: the sentence also has to EXIST.
+            too_short = len(cand.strip()) < 0.45 * len(src_line.strip())
+            dangling  = cand.strip().endswith(("ಮತ್ತು", "and", ",", "-", "—"))
+            if kn_nums == src_nums and not too_short and not dangling:
                 cand = cand.replace("\u0cab\u0cc8\u0cb0\u0ccd",
                                     "\u0c8e\u0cab\u0ccd\u200c\u0c90\u0c86\u0cb0\u0ccd")
                 out.append(cand); kept += 1
                 continue
             failures.append({"line": src_line.strip()[:80],
-                             "en_numbers": src_nums, "kn_numbers": kn_nums})
+                             "en_numbers": src_nums, "kn_numbers": kn_nums,
+                             "reason": ("truncated" if (too_short or dangling) else "numbers changed")})
         else:
             failures.append({"line": src_line.strip()[:80],
                              "en_numbers": src_nums, "kn_numbers": ["<line missing>"]})

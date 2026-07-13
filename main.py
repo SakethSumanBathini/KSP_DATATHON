@@ -1172,8 +1172,8 @@ def _answer_for(ctx, role):
                 f"evidence: {cases_txt}. Shared phone numbers: {phones_txt}."), b["citations"], learned
     if intent == "similar_cases" and cid:
         b = PLAYBOOK.investigate(cid)
-        sims = [s["case_id"] for s in b["similar_cases"]]
-        return f"Most similar modus operandi: cases {sims}.", b["citations"], learned
+        sims = ", ".join(f"FIR {s['case_id']}" for s in b["similar_cases"])
+        return f"Most similar modus operandi: {sims}.", b["citations"], learned
     if intent == "timeline" and cid:
         tl = TIMELINE.build(cid)
         return (f"{len(tl['events'])} events; {tl['linked_prior_count']} linked prior offence(s) "
@@ -1192,15 +1192,23 @@ def _answer_for(ctx, role):
     if intent == "identity_history" and pid:
         s = RISK.score(pid)
         if s:
+            # FOURTH RAW-LIST LEAK, AND THE TEST WAS BLIND TO IT.
+            # I fixed three of these — in the narrative, in the CDR lead, in the vehicle lead —
+            # and wrote a test asserting the CLASS was closed. The test looks for "['" and "', '":
+            # the fingerprints of a list of STRINGS. This is a list of INTEGERS. It renders as
+            # [1, 4, 7, 10, 13] — no quotes anywhere — and walked straight through a green test.
+            # A test that checks for the shape of the last bug is not a test for the class.
+            _cases = ", ".join(f"FIR {c}" for c in s['linked_cases'])
             return (f"{s['name']} [{s['identity']}] appears in {len(s['linked_cases'])} case(s) "
-                    f"after cross-case resolution: {s['linked_cases']}."), s["citations"], learned
+                    f"after cross-case resolution: {_cases}."), s["citations"], learned
     if intent == "money_trail":
         m = MONEY.multi_case_accounts(min_cases=2)
         if m:
             t = m[0]
             learned["account"] = t["account"]
+            _c = ", ".join(f"FIR {x}" for x in t["cases"])
             return (f"{len(m)} account(s) recur across FIRs. Strongest: {t['account']} in "
-                    f"{t['case_count']} cases {t['cases']}."), t["cases"], learned
+                    f"{t['case_count']} cases — {_c}."), t["cases"], learned
     if intent == "trend":
         ec = TREND.emerging_clusters()
         nw = TREND.near_repeat_warnings()

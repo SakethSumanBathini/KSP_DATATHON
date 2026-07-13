@@ -364,14 +364,36 @@ def main():
     # shared_vehicles lead — because case 1 has no shared vehicles, so that branch never executed
     # and this test passed VACUOUSLY. A green test that exercises nothing buys false confidence:
     # it is a lie that looks like proof. Sweep every case, and assert every branch actually ran.
+    import re as _re
+    # any bracketed comma-separated container: ['a','b'] OR [1, 2, 3] OR {'k': 'v'}
+    # CATCH THE CLASS, NOT THE SHAPE OF THE LAST BUG.
+    #   ['a', 'b']  -> opens with a quote       (string list  — the 3 I fixed first)
+    #   [1, 2, 3]   -> comma-separated digits   (integer list — the 5 that shipped anyway)
+    #   {'k': ...}  -> a dict
+    # and deliberately NOT "[Sources: FIR 2, 3, 4]", which is intentional formatting.
+    # My first attempt at widening this caught the integers and BROKE on the strings, because
+    # phone numbers begin with "+" and I had written \w. Fix one, break the other. So this
+    # pattern is asserted against both shapes below before it is trusted.
+    _re_any_list = _re.compile(r"""\[\s*['"]|['"]\s*,\s*['"]|\[\s*\d+\s*(,\s*\d+\s*)+\]|\{\s*['"]""")
+    for _probe, _want in [("cases [7, 13, 3]", True), ("phones ['+91', '+92']", True),
+                          ("[Sources: FIR 2, 3, 4]", False), ("FIR 7, FIR 13", False)]:
+        assert bool(_re_any_list.search(_probe)) == _want, f"leak regex is wrong on {_probe!r}"
     _leaks, _n_leads, _branches = [], 0, set()
     for _cid in range(1, 501):
         _b = _pb.investigate(_cid)
         _txts = list(_b.get("recommended_leads", [])) + list(_b.get("sections", []))
         _n_leads += len(_b.get("recommended_leads", []))
         for _t in _txts:
-            if ("['" in _t) or ("', '" in _t) or ('", "' in _t) or ("{'" in _t):
-                _leaks.append(f"case {_cid}: {_t[:60]}")
+            # TEST FOR THE CLASS, NOT THE SHAPE OF THE LAST BUG.
+            # This used to look for "['" and "', '" — the fingerprints of a list of STRINGS. It
+            # was green for days while FIVE separate leaks of a list of INTEGERS shipped:
+            #     "Most similar modus operandi: cases [7, 13, 3, 5, 10]."
+            #     "appears in 5 case(s) after cross-case resolution: [1, 4, 7, 10, 13]."
+            # No quotes anywhere, so no match, so no failure, so no bug — as far as the test knew.
+            # I fixed three string-leaks, wrote this test, and declared the class closed. The class
+            # was not closed. It was only the part of it I had already seen.
+            if _re_any_list.search(_t):
+                _leaks.append(f"case {_cid}: {_re_any_list.search(_t).group()[:40]}")
             if "Request CDR for shared" in _t: _branches.add("shared_phone")
             if "Trace vehicle"          in _t: _branches.add("shared_vehicle")
             if "Modus operandi matches" in _t: _branches.add("mo")

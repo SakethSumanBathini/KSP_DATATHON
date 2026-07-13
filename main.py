@@ -1412,8 +1412,25 @@ def investigate(case_id):
                 f"{len(linked)} case(s). Do not conflate these two numbers."
             ),
         }
-        narrative_text, narration_backend = NARRATOR.narrate(
-            facts_for_llm, citations=brief.get("citations", []), language="en")
+        # DO NOT PAY FOR A BRIEFING YOU ARE ABOUT TO THROW AWAY.
+        #
+        # /investigate?lang=kn was spending TWO GLM calls: one to write English prose, then another
+        # to translate it into Kannada — and the English prose was discarded the moment the Kannada
+        # arrived. Seven seconds to write it, and the translation then had no budget left and died
+        # on a TimeoutError at 18s. Total: 25.1s, and no Kannada.
+        #
+        # The deterministic template needs NO model call at all. It is instant, it is built from
+        # the same verified facts, and every number in it is ground truth by construction. When he
+        # wants Kannada, we start from that and spend the entire budget on the one call that
+        # actually produces what he asked for.
+        want_kn_brief = (request.args.get("lang") or "").lower() == "kn"
+        if want_kn_brief:
+            narrative_text = NARRATOR._template(
+                facts_for_llm, brief.get("citations", []), "en")
+            narration_backend = "local_template (Kannada requested: budget reserved for translation)"
+        else:
+            narrative_text, narration_backend = NARRATOR.narrate(
+                facts_for_llm, citations=brief.get("citations", []), language="en")
         brief["narrative"] = narrative_text
         brief["narrative_source"] = narration_backend   # e.g. catalyst_glm | local_template
         brief["narrative_en"] = narrative_text          # keep the English — TTS needs it
@@ -1428,17 +1445,66 @@ def investigate(case_id):
         #
         # A language switch that works on some screens and silently not on others is worse than no
         # switch at all: he cannot tell whether the system ignored him or simply has no Kannada.
-        if (request.args.get("lang") or "").lower() == "kn" and narrative_text:
+        if want_kn_brief and narrative_text:
+            # NO SILENT EXCEPT. I have spent this entire build finding bugs that hid behind
+            # `except: pass`, and then wrote a fresh one right here. It swallowed the reason this
+            # translation failed and handed the officer English with no explanation — exactly the
+            # failure mode I keep removing. If it breaks, the response must SAY it broke.
             try:
-                from catalyst_services import translate_to_kannada
-                kn_text, kn_lang = translate_to_kannada(narrative_text)
+                # CHUNKED, because a whole briefing is too big a unit to guard as one piece.
+                # A chat answer has 11 numbers; this has 55. All-or-nothing meant nothing.
+                from catalyst_services import translate_to_kannada_chunked
+                kn_text, kn_lang = translate_to_kannada_chunked(narrative_text)
                 if kn_lang == "kn":
                     brief["narrative"] = kn_text          # what he READS
                     brief["narrative_language"] = "kn"
-                    # narrative_en stays English — what the browser SPEAKS when it has no Kannada
-                    # voice, which is every Windows machine including the judge's.
-            except Exception:
-                pass          # a failed translation must never take down the briefing
+                    # BE HONEST ABOUT WHAT WE COULD NOT TRANSLATE.
+                    # The guard runs per line. Lines whose figures would have moved stayed in
+                    # English — deliberately. He can SEE that on screen, so tell him why, rather
+                    # than let him think the translation is half-broken. It is not broken; it
+                    # refused. Those are different things, and only one of them is a bug.
+                    from catalyst_services import translate_to_kannada_chunked as _tc
+                    _d = getattr(_tc, "diag", {}) or {}
+                    brief["translation_debug"] = _d
+                    kept = _d.get("kept", "")
+                    if _d.get("failures"):
+                        brief["translation_note"] = (
+                            f"{kept} lines translated to Kannada. The remaining lines are shown in "
+                            f"English on purpose: the Kannada wording would have altered a figure "
+                            f"(a score, a count, a distance), and the number guard refused it. "
+                            f"Every number you see is exactly the number in the record.")
+                    # narrative_en stays English — what the browser SPEAKS when there is no Kannada
+                    # voice, which is every Windows machine, including the judge's.
+                else:
+                    # The number guard rejected it: a digit changed, so we threw the translation
+                    # away. That is the guard doing its job — a Kannada briefing that alters an
+                    # FIR number is worse than an English one that does not. But he must be TOLD.
+                    # SAY WHAT ACTUALLY HAPPENED.
+                    # The previous version reported EVERY failure — model unreachable, empty
+                    # response, unparseable output, guard rejection — as "REJECTED by the number
+                    # guard". One branch, four causes, and it confidently named the wrong one. I
+                    # built this note to stop myself guessing and then taught it to guess.
+                    from catalyst_services import translate_to_kannada_chunked as _t
+                    diag = getattr(_t, "diag", {}) or {}
+                    stage = diag.get("stage", "unknown")
+                    if stage == "guard_ran":
+                        why = ("Kannada WAS generated and the NUMBER GUARD rejected it — a figure "
+                               "changed. English shown instead: a briefing that alters an FIR "
+                               "number is worse than one in the wrong language.")
+                    elif stage.startswith("model_call_failed"):
+                        why = f"Kannada unavailable — the model did not respond ({stage})."
+                    elif stage == "model_returned_empty":
+                        why = "Kannada unavailable — the model returned nothing."
+                    elif stage == "markers_unparseable":
+                        why = "Kannada was generated but could not be parsed line-by-line."
+                    else:
+                        why = f"Kannada unavailable (stage: {stage})."
+                    brief["translation_note"] = why
+                    brief["translation_debug"] = diag
+            except Exception as e:
+                brief["translation_note"] = (
+                    f"Kannada translation unavailable ({type(e).__name__}). "
+                    f"Showing the English briefing.")
 
         return app.response_class(
             json.dumps(brief, default=str, ensure_ascii=False),

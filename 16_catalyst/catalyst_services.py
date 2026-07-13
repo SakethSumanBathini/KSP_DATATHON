@@ -187,6 +187,105 @@ def _glm_chat(messages, max_tokens=500, temperature=0.2, timeout=20):
 # ═══════════════════════════════════════════════════════════════════════════
 # 1. QuickML — LLM Serving.  GROUNDED narration.
 # ═══════════════════════════════════════════════════════════════════════════
+def translate_to_kannada_chunked(text, timeout=24):
+    """
+    ONE model call. Per-line number guard. And a failure report that does not lie.
+
+    THREE BUGS LIVED HERE. THE THIRD WAS IN THE BUG-FINDER ITSELF.
+
+    1. ALL-OR-NOTHING GUARDING. A chat answer carries 11 numbers in 162 characters; a case
+       briefing carries 55 in 908. Asking a model to land all 55 exactly is a bet it loses more
+       often than it wins, and when it lost, the guard discarded the ENTIRE translation. One wrong
+       digit anywhere cost the officer the whole briefing. The guard was not too strict — the UNIT
+       was too big.
+
+    2. SO I CALLED THE MODEL ONCE PER SENTENCE — ten sequential LLM calls, and AppSail killed the
+       request with EXECUTION_TIME_EXCEEDED. I turned a wrong answer into no answer. A correct
+       system that times out is not a correct system.
+
+    3. AND THEN THE DIAGNOSTIC LIED. Every non-Kannada return — model unreachable, empty response,
+       unparseable markers, guard rejection — was reported to the officer as "REJECTED by the
+       number guard". One branch, four causes, and it confidently named the wrong one. I built a
+       tool to stop me guessing and then taught it to guess.
+
+    Every return path below now states WHICH thing happened. A failure that cannot say why is a
+    failure you will "fix" three times.
+    """
+    import re as _re
+    _reset = {"stage": "", "kept": "0/0", "failures": [], "raw_head": ""}
+    translate_to_kannada_chunked.diag = _reset
+
+    def _fail(stage, **extra):
+        d = dict(_reset); d["stage"] = stage; d.update(extra)
+        translate_to_kannada_chunked.diag = d
+        return text, "en"
+
+    if not text or not text.strip():
+        return _fail("empty_input")
+
+    lines = [l for l in _re.split(r'(?<=[.!?])\s+|\n+', text) if l and l.strip()]
+    if not lines:
+        return _fail("no_lines")
+
+    numbered = "\n".join(f"[{i+1}] {l.strip()}" for i, l in enumerate(lines))
+    system = (
+        "You translate police briefings from English into Kannada for the Karnataka State Police.\n"
+        "The input is a numbered list. Translate EVERY line. Output the SAME numbering, one line "
+        "each, as [n] <Kannada>. Output nothing else.\n"
+        "ABSOLUTE RULES:\n"
+        "1. Every number, FIR number, phone number, date, distance and count must appear EXACTLY "
+        "as in that line. Never change, round, drop or add a number.\n"
+        "2. A number written as a WORD in English stays a WORD in Kannada. 'seven' -> "
+        "\u0c8f\u0cb3\u0cc1 (NOT 7). 'five' -> \u0c90\u0ca6\u0cc1 (NOT 5). Writing it as a "
+        "digit CREATES a number that was not in the source, and the line will be rejected.\n"
+        "3. Keep proper names and phone numbers exactly as written.\n"
+        "4. 'FIR' is an ACRONYM: write \u0c8e\u0cab\u0ccd\u200c\u0c90\u0c86\u0cb0\u0ccd "
+        "(F-I-R). NEVER \u0cab\u0cc8\u0cb0\u0ccd, which reads as the English word 'fire'."
+    )
+    try:
+        raw = _glm_chat([{"role": "system", "content": system},
+                         {"role": "user", "content": numbered}],
+                        max_tokens=900, temperature=0.1, timeout=timeout)
+    except Exception as e:
+        return _fail(f"model_call_failed:{type(e).__name__}")
+
+    if not raw or not raw.strip():
+        return _fail("model_returned_empty")
+
+    got = {}
+    for m in _re.finditer(r'\[(\d+)\]\s*([^\[]+)', raw):
+        try:
+            got[int(m.group(1))] = m.group(2).strip()
+        except ValueError:
+            continue
+    if not got:
+        return _fail("markers_unparseable", raw_head=raw[:160])
+
+    out, kept, failures = [], 0, []
+    for i, src_line in enumerate(lines):
+        cand = got.get(i + 1)
+        src_nums = _re.findall(r'\d+', src_line)
+        if cand:
+            kn_nums = _re.findall(r'\d+', cand)
+            if kn_nums == src_nums:
+                cand = cand.replace("\u0cab\u0cc8\u0cb0\u0ccd",
+                                    "\u0c8e\u0cab\u0ccd\u200c\u0c90\u0c86\u0cb0\u0ccd")
+                out.append(cand); kept += 1
+                continue
+            failures.append({"line": src_line.strip()[:80],
+                             "en_numbers": src_nums, "kn_numbers": kn_nums})
+        else:
+            failures.append({"line": src_line.strip()[:80],
+                             "en_numbers": src_nums, "kn_numbers": ["<line missing>"]})
+        out.append(src_line.strip())     # this line stays English. Only this one.
+
+    translate_to_kannada_chunked.diag = {
+        "stage": "guard_ran", "kept": f"{kept}/{len(lines)}",
+        "failures": failures[:4], "raw_head": "",
+    }
+    return (" ".join(out), "kn") if kept >= max(1, len(lines) // 2) else (text, "en")
+
+
 def translate_to_kannada(text, timeout=20):
     """
     ANSWER THE OFFICER IN THE LANGUAGE HE ASKED IN.

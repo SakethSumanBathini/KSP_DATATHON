@@ -86,8 +86,14 @@ class BurglaryPlaybook:
         # 5. recommended leads (grounded, cited)
         if brief["network"]["shared_phones"]:
             brief["recommended_leads"].append(
-                f"Request CDR for shared phone(s) {brief['network']['shared_phones']} — "
-                f"linked across cases {net['linked_cases']}.")
+                # NEVER interpolate a list/dict straight into text an officer will read. The old
+                # line produced:  shared phone(s) ['+916513911270', '+9193...'] — cases [2, 3, 4]
+                # Brackets and quote marks are not evidence; they are a leaked data structure, in
+                # an ACTION ITEM someone is expected to carry out. Fixed the narrative line first
+                # and missed this one two lines away — so there is now a test (test_invariants)
+                # that fails on ANY "['" appearing in officer-facing output, anywhere.
+                f"Request CDR for shared phone(s) {', '.join(brief['network']['shared_phones'])} — "
+                f"linked across {', '.join('FIR ' + str(c) for c in net['linked_cases'])}.")
         if brief["network"]["shared_vehicles"]:
             brief["recommended_leads"].append(
                 f"Trace vehicle(s) {brief['network']['shared_vehicles']} appearing in linked cases.")

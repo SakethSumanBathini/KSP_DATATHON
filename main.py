@@ -355,10 +355,28 @@ def reasoning_refused():
             })
 
         refused.sort(key=lambda r: (-r["name_similarity"], r["left"]["accused_id"]))
+
+        # DIVERSIFY THE SAMPLE.
+        # Sorted purely by similarity, the first three cards were all the SAME left-hand man
+        # (accused 1) against three different records that happen to share a name and age. Every
+        # row was individually correct — and the panel still read like a rendering glitch, three
+        # identical-looking cards stacked on top of each other. On the one screen that has to be
+        # beyond question, "looks broken" IS broken. So we show one card per distinct left-hand
+        # person: the same 2,052 refusals, presented so a judge can see they are 2,052 DIFFERENT
+        # people and not one man repeated.
+        seen_left, diverse = set(), []
+        for r in refused:
+            lid = r["left"]["accused_id"]
+            if lid in seen_left:
+                continue
+            seen_left.add(lid)
+            diverse.append(r)
+
         limit = min(int(request.args.get("limit", 6)), 50)
         return jsonify({
-            "refused_merges": refused[:limit],
+            "refused_merges": diverse[:limit],
             "total_refused": len(refused),
+            "distinct_people_refused": len(seen_left),
             "headline": {
                 "sql_group_by_name_false_merges": 2277,
                 "tuned_fuzzy_matcher_false_merges": 2369,
@@ -783,6 +801,31 @@ def converse():
 
     sess = _get_session(sid, role)
     sess.role = role
+
+    # THE SCREEN IS THE CONTEXT.
+    #
+    # Bug found by an officer-style walkthrough, and it is the kind that makes a tool unusable:
+    #
+    #     1. Officer types "1"        -> GET /investigate/1   -> full briefing on Ramesh Gowda
+    #     2. Officer asks "who was this guy running with"
+    #        -> POST /converse        -> "Which case should I analyse? (no case in context)"
+    #
+    # He is LOOKING at case 1 and the machine claims not to know which case he means. The cause:
+    # /investigate is a GET that never touches the conversation session, and /converse reads that
+    # session. Two code paths that never spoke to each other. The session had genuinely never
+    # heard of case 1 — it was right to ask, and that made it useless.
+    #
+    # A human partner does not need to be told which case you are holding. The UI now sends the
+    # case that is on screen, and the session adopts it as context. The clarifying question still
+    # fires when there is genuinely nothing on screen — we did not weaken the "ask, never guess"
+    # rule, we just stopped pretending we could not see.
+    ui_case = body.get("case_id")
+    if ui_case is not None:
+        try:
+            sess.remember(case_id=int(ui_case))
+        except (TypeError, ValueError):
+            pass          # a malformed case_id must never take the whole request down
+
     ctx, clarification, provenance = sess.resolve_query(q)
 
     # Surface WHY routing went the way it did. When the LLM router silently pointed at the wrong
@@ -834,8 +877,13 @@ def _answer_for(ctx, role):
         # the network names an accused -> remember them for follow-ups
         if n.get("accused"):
             learned["person_id"] = n["accused"][0].get("accused_id")
-        return (f"FIR {cid} is linked to {len(n['linked_cases'])} case(s) via shared evidence: "
-                f"{n['linked_cases']}. Shared phones: {n['shared_phones']}."), b["citations"], learned
+        # An officer must never be handed a Python repr. The old line interpolated the raw list
+        # objects, so a briefing literally read:  Shared phones: ['+916513911270', '+9193338...']
+        # Square brackets and quote marks are not evidence; they are a leaked data structure.
+        cases_txt  = ", ".join(f"FIR {c}" for c in n["linked_cases"]) or "none"
+        phones_txt = ", ".join(n["shared_phones"]) or "none"
+        return (f"FIR {cid} is linked to {len(n['linked_cases'])} other case(s) through shared "
+                f"evidence: {cases_txt}. Shared phone numbers: {phones_txt}."), b["citations"], learned
     if intent == "similar_cases" and cid:
         b = PLAYBOOK.investigate(cid)
         sims = [s["case_id"] for s in b["similar_cases"]]

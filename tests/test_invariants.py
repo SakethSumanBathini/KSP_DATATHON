@@ -346,6 +346,23 @@ def main():
     check("no different-people pair is ever AUTO-MERGED (only review/relate/no)",
           all(r[4] != "merge" for r in _res if not r[2]))
 
+    # ── NEW: officer-facing text must be PROSE, never a Python repr ──────────────────────────
+    # We fixed a raw-list leak in the narrative line, and shipped the SAME bug in the action
+    # items TWO LINES AWAY:
+    #     Request CDR for shared phone(s) ['+916513911270', '+9193...'] — cases [2, 3, 4]
+    # Brackets and quote marks are not evidence; they are a leaked data structure, sitting in an
+    # instruction a police officer is expected to carry out. Fixing an INSTANCE does not fix a
+    # CLASS — so this test greps every officer-facing surface for the signature of a container.
+    print("\n--- NEW: officer-facing text is prose, never a leaked Python object ---")
+    from playbook import BurglaryPlaybook
+    _m, _rv, _rl, _groups, _p = resolve(store, graph)
+    _brief = BurglaryPlaybook(store, graph, _groups).investigate(1)
+    _surfaces = list(_brief.get("recommended_leads", [])) + list(_brief.get("sections", []))
+    _leaks = [t for t in _surfaces
+              if ("['" in t) or ('", "' in t) or ("{'" in t) or ("', '" in t)]
+    check("no recommended action contains a raw Python list/dict", not _leaks)
+    check("action items were actually generated (test is not vacuous)", len(_surfaces) > 0)
+
     store.close()
     print("\n" + "=" * 66)
     print(f"  {len(PASS)} PASSED   {len(FAIL)} FAILED")

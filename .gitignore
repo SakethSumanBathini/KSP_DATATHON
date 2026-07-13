@@ -5,3 +5,7 @@
 .catalystrc
 vendor/
 *.log
+
+node_modules/
+10_frontend/node_modules/
+dist/

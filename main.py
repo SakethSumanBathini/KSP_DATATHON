@@ -339,16 +339,57 @@ def search_person():
 
     try:
         from resolve import name_similarity
+        import difflib
+
+        def search_score(query, name):
+            """
+            SEARCH HAS ITS OWN SCORE. It does NOT gate on the identity matcher.
+
+            I wrote that sentence in a comment once and then gated on the identity matcher
+            anyway, and a random typo storm caught it:
+
+                'Prakash ao'  (one deleted letter from 'Prakash Rao')
+                    name_similarity('Prakash ao', 'Prakash Rao')  =  0.000   <-- A HARD ZERO
+                    name_similarity('Prakash ao', 'Ramesh')       =  0.746
+
+            The SURNAME-DISCIPLINE rule — the rule that correctly stops 'Prakash Reddy' merging
+            with 'Prakash Rao' — sees "ao" != "Rao" and annihilates the score. The right man is
+            cut below the threshold entirely, and an unrelated man called Ramesh scrapes over the
+            line on phonetic noise and WINS. An officer typing one letter wrong was shown the
+            wrong human being.
+
+            The rule is not broken. It is doing exactly its job — for IDENTITY, where a false
+            merge accuses an innocent man and doubt must mean NO. But search is the opposite job:
+            a missed hit hides a wanted man, so doubt must mean SHOW HIM ANYWAY and let a human
+            decide.
+
+            So search takes the BEST of three independent signals and never lets one veto the
+            others:
+              - name_similarity : cross-script, phonetic (finds ಮಂಜುನಾಥ್ from "Manjunath")
+              - raw ratio       : whole-string closeness  (survives typos the identity rule kills)
+              - token overlap   : any word matching any word (finds partial names)
+            """
+            ql, nl = query.lower().strip(), name.lower().strip()
+            if ql == nl:
+                return 1.0
+            ident = name_similarity(query, name)                       # may be 0.0 on a typo
+            raw   = difflib.SequenceMatcher(None, ql, nl).ratio()
+            qt, nt = set(ql.split()), set(nl.split())
+            token = 0.0
+            if qt and nt:
+                best = [max((difflib.SequenceMatcher(None, a, b).ratio() for b in nt), default=0)
+                        for a in qt]
+                token = sum(best) / len(best)
+            if ql in nl:
+                raw = max(raw, 0.95)
+            return max(ident, raw, token)          # NO signal may veto the others
+
         hits = []
         for a in STORE.all_accused():
             nm = a.get("AccusedName") or ""
             if not nm:
                 continue
-            sim = name_similarity(q, nm)          # cross-script + phonetic + typo tolerant
-            if q.lower().strip() == nm.lower().strip():
-                sim = 1.0                         # exact string match outranks everything
-            elif q.lower() in nm.lower():
-                sim = max(sim, 0.97)
+            sim = search_score(q, nm)
             if sim >= 0.72:                       # below this it is noise, not a near-miss
                 hits.append((sim, a))
 
@@ -380,15 +421,16 @@ def search_person():
         # So search gets its own score — transliteration-aware similarity BLENDED with raw
         # whole-string closeness — while identity keeps the strict matcher, untouched. Reusing one
         # for the other was the mistake.
-        import difflib
         def _rank(t):
             sim, a = t
             aid = a["AccusedMasterID"]
             nm  = (a.get("AccusedName") or "").lower()
             grp = next((g for g in GROUPS if aid in g), None)
             whole = difflib.SequenceMatcher(None, q.lower(), nm).ratio()
-            blended = sim + whole          # full-name near-misses beat first-name-only exacts
-            return (-blended, -(len(grp) if grp else 1))
+            # sim already includes the whole-string signal; adding it again breaks ties toward
+            # full-name matches over first-name-only ones, then toward people we actually KNOW
+            # something about (a resolved identity with many linked records).
+            return (-(sim + whole), -(len(grp) if grp else 1))
         hits.sort(key=_rank)
 
         # Group by the identity KAVERI actually resolved — never by name.

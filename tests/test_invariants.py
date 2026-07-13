@@ -402,6 +402,31 @@ def main():
           _clamp("scrb_analyst", False) == "station_officer")
     check("a VALID token's role is honoured", _clamp("scrb_analyst", True) == "scrb_analyst")
 
+    # ── NEW: SEARCH must not inherit IDENTITY's strictness ──────────────────────────────────
+    # A random typo storm caught this. name_similarity("Prakash ao", "Prakash Rao") returns a HARD
+    # 0.000 — the surname-discipline rule (which correctly stops "Prakash Reddy" merging with
+    # "Prakash Rao") annihilates it. Gating SEARCH on that score cut the right man out entirely,
+    # and an unrelated "Ramesh" scraped over the threshold and won. An officer with one typo was
+    # shown the wrong human being.
+    #   identity: doubt must mean NO  (a false merge accuses an innocent man)
+    #   search  : doubt must mean SHOW (a missed hit hides a wanted one)
+    # Opposite jobs. One matcher cannot serve both.
+    print("\n--- NEW: search score is independent of the identity matcher ---")
+    import difflib as _dl
+    def _search_score(query, name):
+        ql, nl = query.lower().strip(), name.lower().strip()
+        if ql == nl: return 1.0
+        ident = name_similarity(query, name)
+        raw   = _dl.SequenceMatcher(None, ql, nl).ratio()
+        if ql in nl: raw = max(raw, 0.95)
+        return max(ident, raw)
+    check("identity matcher scores 'Prakash ao' vs 'Prakash Rao' at ~0 (surname discipline intact)",
+          name_similarity("Prakash ao", "Prakash Rao") < 0.3)
+    check("SEARCH still finds him despite that (score >= 0.72)",
+          _search_score("Prakash ao", "Prakash Rao") >= 0.72)
+    check("search ranks the right man ABOVE an unrelated one",
+          _search_score("Prakash ao", "Prakash Rao") > _search_score("Prakash ao", "Ramesh"))
+
     store.close()
     print("\n" + "=" * 66)
     print(f"  {len(PASS)} PASSED   {len(FAIL)} FAILED")

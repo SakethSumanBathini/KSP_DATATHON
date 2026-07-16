@@ -49,7 +49,7 @@ from conversation import Session, classify_intent
 
 # Build marker — bump this string on every deploy to VERIFY the live process restarted.
 # If /health shows an old value after a deploy, the container is serving stale code.
-KAVERI_BUILD = "2026-07-17-kannada-translit-fix"
+KAVERI_BUILD = "2026-07-17-team-astravajra"
 from auth import issue_token, verify_token, authenticate, VALID_ROLES
 from catalyst_services import (GroundedNarrator, ZiaVoice, CatalystAuth, CatalystAudit,
                                status as catalyst_status,
@@ -1447,7 +1447,8 @@ def home():
                      "issues them after an officer logs in."),
         },
         "roles": list(ROLES.keys()),
-        "team": "Agentron",
+        "team": "AstraVajra",
+        "team_members": ["Bathini Saketh Suman", "Paavni Bansal", "Shaurya Sanyal", "S. Sreerevanth"],
     })
 
 

@@ -4,15 +4,18 @@
 
 ### AI Investigation Copilot for the Karnataka State Police
 
-**Team Agentron** · Datathon 2026 · Built on Zoho Catalyst
+**Team AstraVajra** · Datathon 2026 · Built on Zoho Catalyst
 
-[![Live](https://img.shields.io/badge/Catalyst-LIVE-brightgreen?style=for-the-badge)](https://kaveri-backend-50043711203.development.catalystappsail.in/health)
+[![Live App](https://img.shields.io/badge/▶%20LIVE%20APP-open-06b6d4?style=for-the-badge)](https://ksp-datathon-henna.vercel.app/)
+[![Backend](https://img.shields.io/badge/Catalyst-LIVE-brightgreen?style=for-the-badge)](https://kaveri-backend-50043711203.development.catalystappsail.in/health)
 [![Tests](https://img.shields.io/badge/tests-94%20passing-brightgreen?style=for-the-badge)]()
 [![False Merges](https://img.shields.io/badge/false%20merges-0-blue?style=for-the-badge)]()
 [![LLM](https://img.shields.io/badge/GLM--4.7-hallucination%20guarded-orange?style=for-the-badge)]()
 
-**[▶ Live API](https://kaveri-backend-50043711203.development.catalystappsail.in/investigate/1)** ·
-**[Health](https://kaveri-backend-50043711203.development.catalystappsail.in/health)**
+### ▶ Try it live: **[ksp-datathon-henna.vercel.app](https://ksp-datathon-henna.vercel.app/)**
+
+**[Live API](https://kaveri-backend-50043711203.development.catalystappsail.in/investigate/1)** ·
+**[Backend Health](https://kaveri-backend-50043711203.development.catalystappsail.in/health)**
 
 </div>
 
@@ -377,6 +380,8 @@ python3 tests/scale_benchmark.py       # does it scale?
 
 <div align="center">
 
-**Team Agentron** · Karnataka State Police Datathon 2026
+**Team AstraVajra** · Karnataka State Police Datathon 2026
+
+Bathini Saketh Suman · Paavni Bansal · Shaurya Sanyal · S. Sreerevanth
 
 </div>

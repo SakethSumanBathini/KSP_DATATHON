@@ -739,10 +739,65 @@ export default function App() {
                         </div>
                   )}
                   {activeTab === 'Identity Panel' && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-xs font-mono uppercase tracking-widest text-neutral-600 p-8 text-center bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:16px_16px]">
-                      <Users size={32} className="mb-4 opacity-30" />
-                      View full reasoning in the<br/><span className="text-cyan-500 mt-2 block">Identity Resolution Module</span>
-                    </div>
+                    (data?.network?.accused?.length || data?.network?.linked_cases?.length)
+                      ? <div className="absolute inset-0 overflow-y-auto p-5 space-y-4 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:32px_32px]">
+                          {/* ACCUSED — resolved identities */}
+                          {data.network?.accused?.length ? (
+                            <div>
+                              <div className="text-[10px] font-mono uppercase tracking-widest text-cyan-600 mb-2">Accused · cross-case identity</div>
+                              <div className="space-y-2">
+                                {data.network.accused.map(a => (
+                                  <div key={a.accused_id} className="bg-panel border border-neutral-800 rounded p-3 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                      <Users size={16} className="text-cyan-500 shrink-0" />
+                                      <span className="text-sm font-bold text-white">{a.name}</span>
+                                    </div>
+                                    <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/30 px-2 py-0.5 rounded border border-cyan-500/10">{a.identity}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ) : null}
+
+                          {/* LINKED CASES — the network this case belongs to */}
+                          {data.network?.linked_cases?.length ? (
+                            <div>
+                              <div className="text-[10px] font-mono uppercase tracking-widest text-cyan-600 mb-2">Linked cases · {data.network.linked_cases.length} via shared evidence</div>
+                              <div className="flex flex-wrap gap-2">
+                                {data.network.linked_cases.map(cid => (
+                                  <button key={cid} onClick={() => executeSearch(String(cid))}
+                                    className="text-xs font-mono bg-panel border border-neutral-800 hover:border-cyan-500/50 hover:text-cyan-300 text-neutral-300 px-3 py-1.5 rounded transition-colors">
+                                    FIR {cid}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ) : null}
+
+                          {/* SHARED EVIDENCE — what corroborates the identity */}
+                          {(data.network?.shared_phones?.length || data.network?.shared_vehicles?.length) ? (
+                            <div>
+                              <div className="text-[10px] font-mono uppercase tracking-widest text-cyan-600 mb-2">Corroborating evidence</div>
+                              <div className="space-y-1.5">
+                                {data.network?.shared_phones?.map(ph => (
+                                  <div key={ph} className="text-xs font-mono text-neutral-400 bg-panel border border-neutral-800 rounded px-3 py-2">📞 {ph}</div>
+                                ))}
+                                {data.network?.shared_vehicles?.map(v => (
+                                  <div key={v} className="text-xs font-mono text-neutral-400 bg-panel border border-neutral-800 rounded px-3 py-2">🚗 {v}</div>
+                                ))}
+                              </div>
+                            </div>
+                          ) : null}
+
+                          <button onClick={() => setActiveView('Identity Resolution')}
+                            className="w-full text-center text-[10px] font-mono uppercase tracking-widest text-cyan-500 hover:text-cyan-300 border border-cyan-500/20 hover:border-cyan-500/50 rounded py-2.5 transition-colors mt-2">
+                            See how the resolution engine works →
+                          </button>
+                        </div>
+                      : <div className="absolute inset-0 flex flex-col items-center justify-center text-xs font-mono uppercase tracking-widest text-neutral-600 p-8 text-center bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:16px_16px]">
+                          <Users size={32} className="mb-4 opacity-30" />
+                          NO CROSS-CASE IDENTITY FOR THIS FIR
+                        </div>
                   )}
                   {activeTab === 'Similar Cases' && (
                     data?.similar_cases?.length

@@ -51,6 +51,7 @@ interface Marker {
 
 interface FirRow {
   fir: string;
+  caseId: number;
   station: string;
   district: string;
   crimeType: string;
@@ -102,7 +103,7 @@ const _fbMarkers: Marker[] = [
 ];
 
 const _fbFirRows: FirRow[] = [
-  { fir: '—', station: '—', district: '—', crimeType: '—', officer: '—', status: 'Registered', priority: 'Medium', date: '' },
+  { fir: '—', caseId: 0, station: '—', district: '—', crimeType: '—', officer: '—', status: 'Registered', priority: 'Medium', date: '' },
 ];
 
 
@@ -163,6 +164,8 @@ export function PoliceCommandDashboard() {
   // Police AI Assistant — real /converse calls. Was a dead panel with a hardcoded "insight".
   const [aiAnswer, setAiAnswer] = useState<string>('Ask a question below. Answers come from the KAVERI reasoning engine over the real case corpus.');
   const [aiBusy, setAiBusy] = useState(false);
+  const [aiCaseInput, setAiCaseInput] = useState<string>('1');   // string so the field can be cleared & retyped freely
+
   const askAI = async (prompt: string) => {
     setAiBusy(true);
     setAiAnswer('Thinking…');
@@ -174,7 +177,7 @@ export function PoliceCommandDashboard() {
       const d = await apiFetch('/converse', {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ session_id: 'dashboard', query: prompt, case_id: 1 }),
+        body: JSON.stringify({ session_id: 'dashboard', query: prompt, case_id: Math.max(1, Math.min(500, parseInt(aiCaseInput, 10) || 1)) }),
       });
       setAiAnswer(d.answer || d.answer_en || 'No answer returned.');
     } catch (e: any) {
@@ -249,6 +252,7 @@ export function PoliceCommandDashboard() {
         // recent FIR table — real
         setFirRows((d.recent_firs || []).map((r: any): FirRow => ({
           fir: String(r.fir),
+          caseId: Number(r.case_id),
           station: r.district,
           district: r.district,
           crimeType: r.crimeType,
@@ -382,7 +386,17 @@ export function PoliceCommandDashboard() {
                         <td className="py-4 pr-4"><PriorityBadge value={row.priority} /></td>
                         <td className="py-4 pr-4 font-mono text-xs text-neutral-500">{row.date}</td>
                         <td className="py-4 pr-4">
-                          <button className="inline-flex items-center justify-center w-8 h-8 rounded border border-neutral-800 text-neutral-500 hover:text-cyan-400 hover:border-cyan-500/50 transition-colors" aria-label={`Open ${row.fir}`}>
+                          <button
+                            onClick={() => {
+                              if (row.caseId > 0) {
+                                setAiCaseInput(String(row.caseId));
+                                askAI('Show the crime network.');
+                              }
+                            }}
+                            className="inline-flex items-center justify-center w-8 h-8 rounded border border-neutral-800 text-neutral-500 hover:text-cyan-400 hover:border-cyan-500/50 transition-colors"
+                            aria-label={`View ${row.fir} details`}
+                            title={`View ${row.fir} details`}
+                          >
                             <Eye size={15} />
                           </button>
                         </td>
@@ -402,7 +416,24 @@ export function PoliceCommandDashboard() {
           </div>
 
           <div className="space-y-5">
-            <Panel title="Police AI Assistant" icon={<Bot size={16} />} action="Live · KAVERI engine">
+            <div id="ai-assistant-panel"><Panel title="Police AI Assistant" icon={<Bot size={16} />} action="Live · KAVERI engine">
+              <div className="mb-3 flex items-center gap-2">
+                <label className="text-[10px] font-mono uppercase tracking-widest text-neutral-500 shrink-0">Case #</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={500}
+                  value={aiCaseInput}
+                  onChange={e => setAiCaseInput(e.target.value)}
+                  onBlur={e => {
+                    const n = parseInt(e.target.value, 10);
+                    setAiCaseInput(String(Number.isNaN(n) ? 1 : Math.max(1, Math.min(500, n))));
+                  }}
+                  className="w-20 bg-neutral-950 border border-neutral-700 rounded px-2 py-1.5 text-xs text-cyan-100 focus:border-cyan-500/50 outline-none [color-scheme:dark]"
+                  aria-label="Case number for AI assistant"
+                />
+                <span className="text-[10px] text-neutral-600">of 500 — questions below analyse this case</span>
+              </div>
               <div className="space-y-3">
                 {aiPrompts.map(prompt => (
                   <button
@@ -419,7 +450,7 @@ export function PoliceCommandDashboard() {
                 <div className="text-[10px] font-mono uppercase tracking-widest text-cyan-500 mb-2">Assistant response {aiBusy && '· querying…'}</div>
                 <p className="text-sm text-neutral-300 leading-relaxed whitespace-pre-wrap">{aiAnswer}</p>
               </div>
-            </Panel>
+            </Panel></div>
 
           </div>
         </section>
@@ -622,10 +653,12 @@ function CrimeMap({ markers, selectedMarker, onSelect }: { markers: Marker[]; se
         <circle cx="56" cy="52" r="24" fill="none" stroke="rgba(239,68,68,0.28)" strokeWidth="0.6" strokeDasharray="2 2" />
         <circle cx="56" cy="52" r="14" fill="rgba(239,68,68,0.08)" stroke="rgba(239,68,68,0.35)" strokeWidth="0.4" />
       </svg>
-      <div className="absolute top-4 left-4 flex flex-wrap gap-2 max-w-[520px]">
-        {['FIR locations', 'Crime hotspots', 'Police stations', 'Patrol vehicles', 'Emergency incidents', 'Missing persons', 'Wanted criminals', 'District boundaries'].map(label => (
-          <span key={label} className="text-[9px] font-mono uppercase tracking-widest px-2 py-1 rounded border border-neutral-800 bg-black/60 text-neutral-400">{label}</span>
-        ))}
+      <div className="absolute top-4 left-4 flex flex-col gap-1.5">
+        <div className="text-[9px] font-mono uppercase tracking-widest px-2 py-1 rounded border border-cyan-500/30 bg-black/70 text-cyan-400 w-fit">FIR locations · live from 500 cases</div>
+        <div className="flex flex-wrap gap-2 max-w-[420px]">
+          <span className="flex items-center gap-1.5 text-[9px] font-mono uppercase tracking-widest px-2 py-1 rounded border border-neutral-800 bg-black/60 text-neutral-400"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#ef4444' }}></span>Heinous</span>
+          <span className="flex items-center gap-1.5 text-[9px] font-mono uppercase tracking-widest px-2 py-1 rounded border border-neutral-800 bg-black/60 text-neutral-400"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#22d3ee' }}></span>Non-heinous</span>
+        </div>
       </div>
       {markers.map(marker => (
         <button
@@ -673,14 +706,14 @@ function Info({ label, value }: { label: string; value: string }) {
 }
 
 function FirFilters({ rows, filters, setFilters }: { rows: FirRow[]; filters: Record<string, string>; setFilters: (next: any) => void }) {
-  const unique = (key: keyof FirRow) => ['All', ...Array.from(new Set(rows.map(row => row[key])))];
+  const unique = (key: keyof FirRow) => ['All', ...Array.from(new Set(rows.map(row => String(row[key]))))];
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2">
       <input
         type="date"
         value={filters.date}
         onChange={e => setFilters((f: any) => ({ ...f, date: e.target.value }))}
-        className="bg-panelHover border border-neutral-800 rounded px-3 py-2 text-xs text-neutral-300 focus:border-cyan-500/50 outline-none"
+        className="bg-neutral-950 border border-neutral-700 rounded px-3 py-2 text-xs text-cyan-100 focus:border-cyan-500/50 outline-none [color-scheme:dark]"
         aria-label="Filter by date"
       />
       <FilterSelect label="Crime Type" value={filters.crimeType} options={unique('crimeType')} onChange={value => setFilters((f: any) => ({ ...f, crimeType: value }))} />
@@ -695,8 +728,8 @@ function FirFilters({ rows, filters, setFilters }: { rows: FirRow[]; filters: Re
 
 function FilterSelect({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (value: string) => void }) {
   return (
-    <select value={value} onChange={e => onChange(e.target.value)} aria-label={`Filter by ${label}`} className="bg-panelHover border border-neutral-800 rounded px-3 py-2 text-xs text-neutral-300 focus:border-cyan-500/50 outline-none">
-      {options.map(option => <option key={option} value={option}>{option}</option>)}
+    <select value={value} onChange={e => onChange(e.target.value)} aria-label={`Filter by ${label}`} className="bg-neutral-950 border border-neutral-700 rounded px-3 py-2 text-xs text-cyan-100 focus:border-cyan-500/50 outline-none [color-scheme:dark]">
+      {options.map(option => <option key={option} value={option} className="bg-neutral-950 text-cyan-100">{option}</option>)}
     </select>
   );
 }

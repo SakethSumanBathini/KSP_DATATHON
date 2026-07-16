@@ -46,6 +46,10 @@ from trends import TrendAnalyser
 from money_trail import MoneyTrailAnalyser
 from timeline_export import CaseTimeline, export_conversation
 from conversation import Session, classify_intent
+
+# Build marker — bump this string on every deploy to VERIFY the live process restarted.
+# If /health shows an old value after a deploy, the container is serving stale code.
+KAVERI_BUILD = "2026-07-17-kannada-translit-fix"
 from auth import issue_token, verify_token, authenticate, VALID_ROLES
 from catalyst_services import (GroundedNarrator, ZiaVoice, CatalystAuth, CatalystAudit,
                                status as catalyst_status,
@@ -1532,6 +1536,7 @@ def dashboard_summary():
 def health():
     """Health + BACKEND TRANSPARENCY: which implementation really served each capability."""
     return jsonify({
+        "build": KAVERI_BUILD,
         "status": "ok",
         "cases": len(STORE.get_all_cases()),
         "resolved_identities": len(GROUPS),
@@ -1589,9 +1594,21 @@ def investigate(case_id):
     # Third time the same blind spot: coverage measured by what I remembered checking, not by what
     # exists. "I tested that endpoint" is not the same sentence as "I tested that endpoint for the
     # thing that is now going wrong."
-    claims, _v = _caller()
+    claims, visible = _caller()
     if claims is None:
         return _unauth()
+    # JURISDICTION — enforced here to match /timeline and /reasoning. Previously this route computed
+    # the visible set and ignored it, so a station officer could pull any case's full briefing
+    # (names, phones, links) outside their station. The cross-case routes already blocked this; the
+    # single-case briefing — the most-used endpoint — did not. Now consistent: no case outside your
+    # scope, on any route. (The demo's scrb_analyst role is state-wide, so this is invisible to the
+    # walkthrough; it matters for a real station login.)
+    role = claims["role"]
+    if not visible:
+        return _deny(role)
+    if case_id not in visible:
+        return jsonify({"error": "access_denied", "role": role,
+                        "detail": f"FIR {case_id} is outside your jurisdiction."}), 403
     try:
         if not STORE.get_case(case_id):
             return jsonify({"error": f"case {case_id} not found"}), 404

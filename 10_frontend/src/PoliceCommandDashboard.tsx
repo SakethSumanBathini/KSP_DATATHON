@@ -111,13 +111,14 @@ const _fbFirRows: FirRow[] = [
 
 // Prompts that map to REAL /converse capabilities (network, similar cases, risk, prior history,
 // money trail, trends). These actually query the backend, on the case currently in context.
+// With case 1 passed as context (see askAI), all of these return real answers from the engine.
 const aiPrompts = [
+  'Show the crime network.',
+  'Find similar cases.',
   'Trace the money trail.',
   'Show crime trends.',
-  'Show the network for case 1.',
-  'What are the burglary trends?',
-  'Show prior history for accused 1.',
-  'Assess the risk for case 1.',
+  'Assess the risk.',
+  'Show the investigation timeline.',
 ];
 
 const toneClass: Record<Kpi['tone'], string> = {
@@ -166,10 +167,14 @@ export function PoliceCommandDashboard() {
     setAiBusy(true);
     setAiAnswer('Thinking…');
     try {
+      // Pass a default case context (case 1) so context-dependent intents — network, similar
+      // cases, timeline — return a real answer from the dashboard rather than asking "which case?".
+      // Aggregate intents (money trail, trends) ignore it. The Investigation Workspace still drives
+      // its own live case context; this is just a sensible default for the dashboard's quick panel.
       const d = await apiFetch('/converse', {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ session_id: 'dashboard', query: prompt }),
+        body: JSON.stringify({ session_id: 'dashboard', query: prompt, case_id: 1 }),
       });
       setAiAnswer(d.answer || d.answer_en || 'No answer returned.');
     } catch (e: any) {

@@ -554,6 +554,23 @@ def main():
     _geo = sum(1 for c in _dcases if c.get("latitude") and c.get("longitude"))
     check("every FIR has real coordinates for the map (no invented pins)", _geo == _dtotal)
 
+    # ── NEW: /investigate enforces jurisdiction (a station officer cannot read other stations) ──
+    # Audit finding: /investigate computed the visible set but never checked the case against it,
+    # so a station_officer could pull ANY case's full briefing — names, phones, links — outside
+    # their station. The cross-case routes (/timeline, /reasoning) already blocked this; the
+    # single-case briefing did not. This pins the fix: in-scope case allowed, out-of-scope denied.
+    print("\n--- NEW: /investigate enforces station jurisdiction ---")
+    from trust import AccessControl as _AC
+    _acc = _AC(store)
+    _vis6101 = _acc.visible_case_ids("station_officer", user_station_id=6101)
+    # find one case in 6101 and one NOT in 6101
+    _all = store.get_all_cases()
+    _in = next((c["CaseMasterID"] for c in _all if c["PoliceStationID"] == 6101), None)
+    _out = next((c["CaseMasterID"] for c in _all if c["PoliceStationID"] != 6101), None)
+    check("station officer's visible set is non-empty and bounded", 0 < len(_vis6101) < len(_all))
+    check("a case IN the officer's station is visible", _in is None or _in in _vis6101)
+    check("a case OUTSIDE the officer's station is NOT visible", _out is None or _out not in _vis6101)
+
     store.close()
     print("\n" + "=" * 66)
     print(f"  {len(PASS)} PASSED   {len(FAIL)} FAILED")

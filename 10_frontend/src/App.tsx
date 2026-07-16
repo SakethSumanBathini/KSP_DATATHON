@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, Shield, AlertTriangle, Search, Mic, CheckCircle2, Database, Users, Activity, Fingerprint, Square, CornerDownLeft, Volume2, Loader2, Moon, Sun, RadioTower } from 'lucide-react';
+import { LayoutDashboard, Shield, AlertTriangle, Search, Mic, CheckCircle2, Database, Users, Activity, Fingerprint, Square, CornerDownLeft, Volume2, Loader2, RadioTower } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { IdentityResolutionView } from './IdentityResolutionView';
@@ -99,7 +99,25 @@ function editDistance(a: string, b: string): number {
   return prev[n];
 }
 
+// Speech recognition mishears "case N" / "FIR N" as homophones: "case one" collapses into
+// "Keshwan"/"Kishan", "FIR" is heard as "Fire"/"fear", "case" as "keys"/"kase". The Web Speech
+// engine cannot be tuned, so we repair the transcript before parsing. This maps known mishearings
+// back to their intent, then normal number-parsing takes over. English only — Kannada is untouched.
+function normalizeVoice(text: string): string {
+  let t = ' ' + text.toLowerCase().trim() + ' ';
+  // "FIR" family -> "fir" (so "Fire 1" / "fear 1" -> "fir 1")
+  t = t.replace(/\b(fire|fired|fier|fear|feyar|phair)\b/g, 'fir');
+  // "case" family -> "case" (so "keys 1" / "kase 1" -> "case 1")
+  t = t.replace(/\b(keys|kase|kaise|keys's|cayce)\b/g, 'case');
+  // mangled "case one" said as a single word -> "case 1"
+  t = t.replace(/\b(keshwan|kishwan|kishan|keshawan|keshvan|kesh one|kesh wan)\b/g, 'case 1');
+  t = t.replace(/\b(kesh two|keshtwo)\b/g, 'case 2');
+  t = t.replace(/\b(kesh three)\b/g, 'case 3');
+  return t.trim();
+}
+
 function caseNumberIn(text: string): string | null {
+  text = normalizeVoice(text);   // repair "Fire 1"->"fir 1", "Keshwan"->"case 1" before parsing
   const digits = text.match(/\b(\d{1,3})\b/);
   if (digits) return digits[1];
 
@@ -141,18 +159,15 @@ export default function App() {
   const [lang, setLang] = useState<'kn-IN' | 'en-IN'>('en-IN');   // BUG 2/3: was hardcoded kn-IN
   const [activeView, setActiveView] = useState('Investigation Workspace');   // land on the REAL product first, not the concept dashboard
   const [activeTab, setActiveTab] = useState('Crime Network');
-  // Locked to dark for now. Components use hardcoded dark colors (bg-slate-950, text-white, etc.)
-  // that don't yet respond to the theme tokens, so light mode would show invisible text on white.
-  // Revisit as a dedicated task: rewrite component colors to themed tokens, THEN unlock this.
-  const [theme] = useState<'dark' | 'light'>('dark');
+  // Dark-only. This is a police command / intelligence surface — dark is the correct, expected
+  // aesthetic for the domain, and the whole palette is tuned for it. The theme mechanism (tokens
+  // that flip on the .dark class) is left intact in the CSS, but the UI ships dark and the toggle
+  // is hidden rather than shipping a second, lower-quality light surface.
 
   useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [theme]);
+    // Always dark (see theme note above).
+    document.documentElement.classList.add('dark');
+  }, []);
 
   useEffect(() => {
     apiFetch('/health')
@@ -532,13 +547,7 @@ export default function App() {
             </div>
           </div>
           <div className="flex items-center gap-6 text-xs font-mono font-medium text-neutral-500">
-            <button
-              onClick={() => { /* theme locked to dark until component colors are themed — see note above */ }}
-              className="p-1.5 rounded border border-neutral-800 bg-panel hover:border-cyan-500/50 transition-colors text-neutral-400 hover:text-cyan-400"
-              title="Toggle theme"
-            >
-              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
+
             <button
               onClick={() => {
                 const nextLang = lang === 'kn-IN' ? 'en-IN' : 'kn-IN';

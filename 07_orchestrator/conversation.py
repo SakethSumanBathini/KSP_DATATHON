@@ -22,44 +22,44 @@ LAST_ROUTE_REASON = None   # why the LLM router did/didn't fire — surfaced, ne
 INTENT_KEYWORDS = {
     "network": {
         "en": ["network", "linked", "connected", "connection", "gang", "associates", "who else"],
-        "kn": ["ಜಾಲ", "ಸಂಪರ್ಕ", "ಸಂಬಂಧ", "ಗುಂಪು"],
+        "kn": ["ಜಾಲ", "ಸಂಪರ್ಕ", "ಸಂಬಂಧ", "ಗುಂಪು", "ನೆಟ್‌ವರ್ಕ್", "ನೆಟ್ವರ್ಕ್", "ಲಿಂಕ್", "ಕನೆಕ್ಷನ್"],
     },
     "identity_history": {
         "en": ["history", "prior", "previous", "record", "alias", "same person", "background"],
-        "kn": ["ಇತಿಹಾಸ", "ಹಿಂದಿನ", "ದಾಖಲೆ", "ಪೂರ್ವ"],
+        "kn": ["ಇತಿಹಾಸ", "ಹಿಂದಿನ", "ದಾಖಲೆ", "ಪೂರ್ವ", "ಹಿಸ್ಟರಿ", "ರೆಕಾರ್ಡ್", "ಪ್ರಯರ್"],
     },
     "similar_cases": {
         "en": ["similar", "same modus", "same mo", "like this", "comparable", "pattern"],
-        "kn": ["ಹೋಲಿಕೆ", "ಸಮಾನ", "ಮಾದರಿ"],
+        "kn": ["ಹೋಲಿಕೆ", "ಸಮಾನ", "ಮಾದರಿ", "ಸಿಮಿಲರ್", "ಪ್ಯಾಟರ್ನ್"],
     },
     "risk": {
         "en": ["risk", "dangerous", "priority", "prioritise", "prioritize", "how serious"],
-        "kn": ["ಅಪಾಯ", "ಆದ್ಯತೆ"],
+        "kn": ["ಅಪಾಯ", "ಆದ್ಯತೆ", "ರಿಸ್ಕ್", "ಪ್ರಯಾರಿಟಿ", "ಡೇಂಜರ್"],
     },
     "money_trail": {
         "en": ["money", "financial", "upi", "transaction", "account", "payment", "transfer"],
-        "kn": ["ಹಣ", "ಹಣಕಾಸು", "ವರ್ಗಾವಣೆ", "ಖಾತೆ"],
+        "kn": ["ಹಣ", "ಹಣಕಾಸು", "ವರ್ಗಾವಣೆ", "ಖಾತೆ", "ಮನಿ", "ಟ್ರಾನ್ಸಾಕ್ಷನ್", "ಯುಪಿಐ", "ಅಕೌಂಟ್", "ಪೇಮೆಂಟ್"],
     },
     "trend": {
         "en": ["trend", "hotspot", "spike", "increase", "rising", "pattern over time", "forecast",
                "early warning", "alert", "cluster"],
-        "kn": ["ಪ್ರವೃತ್ತಿ", "ಹೆಚ್ಚಳ", "ಎಚ್ಚರಿಕೆ"],
+        "kn": ["ಪ್ರವೃತ್ತಿ", "ಹೆಚ್ಚಳ", "ಎಚ್ಚರಿಕೆ", "ಟ್ರೆಂಡ್", "ಹಾಟ್‌ಸ್ಪಾಟ್", "ಅಲರ್ಟ್"],
     },
     "accused": {
         "en": ["main accused", "who is the accused", "accused", "suspect", "who did", "culprit"],
-        "kn": ["ಆರೋಪಿ", "ಶಂಕಿತ", "ಯಾರು"],
+        "kn": ["ಆರೋಪಿ", "ಶಂಕಿತ", "ಯಾರು", "ಸಸ್ಪೆಕ್ಟ್", "ಅಕ್ಯೂಸ್ಡ್"],
     },
     "victim": {
         "en": ["victim", "complainant", "who was targeted", "who reported"],
-        "kn": ["ಸಂತ್ರಸ್ತ", "ದೂರುದಾರ"],
+        "kn": ["ಸಂತ್ರಸ್ತ", "ದೂರುದಾರ", "ವಿಕ್ಟಿಮ್", "ಕಂಪ್ಲೇನಂಟ್"],
     },
     "status": {
         "en": ["status", "investigation status", "where does it stand", "chargesheet"],
-        "kn": ["ಸ್ಥಿತಿ", "ತನಿಖೆ"],
+        "kn": ["ಸ್ಥಿತಿ", "ತನಿಖೆ", "ಸ್ಟೇಟಸ್", "ಚಾರ್ಜ್‌ಶೀಟ್"],
     },
     "timeline": {
         "en": ["timeline", "chronology", "sequence", "what happened", "when did"],
-        "kn": ["ಕಾಲಾನುಕ್ರಮ", "ಯಾವಾಗ"],
+        "kn": ["ಕಾಲಾನುಕ್ರಮ", "ಯಾವಾಗ", "ಟೈಮ್‌ಲೈನ್", "ಘಟನಾವಳಿ"],
     },
 }
 

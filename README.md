@@ -7,7 +7,7 @@
 **Team Agentron** · Datathon 2026 · Built on Zoho Catalyst
 
 [![Live](https://img.shields.io/badge/Catalyst-LIVE-brightgreen?style=for-the-badge)](https://kaveri-backend-50043711203.development.catalystappsail.in/health)
-[![Tests](https://img.shields.io/badge/tests-67%20passing-brightgreen?style=for-the-badge)]()
+[![Tests](https://img.shields.io/badge/tests-94%20passing-brightgreen?style=for-the-badge)]()
 [![False Merges](https://img.shields.io/badge/false%20merges-0-blue?style=for-the-badge)]()
 [![LLM](https://img.shields.io/badge/GLM--4.7-hallucination%20guarded-orange?style=for-the-badge)]()
 
@@ -147,7 +147,7 @@ flowchart TB
     end
 
     OFF(["👮 OFFICER"])
-    AUD[("🔗 Catalyst Data Store<br/>hash-chained audit")]
+    AUD[("🔗 Hash-chained audit<br/>Data Store adapter ready")]
 
     FIR --> EXT --> ER --> GRAPH --> RET --> F --> G --> H
     H -->|"✅ passes"| OFF
@@ -203,7 +203,7 @@ flowchart LR
     D -->|"caste / religion<br/>profiling"| X4["❌ RAISES — code path<br/>does not exist"]
     D -->|"✅ lawful"| E["🎭 PII masking<br/>by role"]
     E --> F["📤 Cited response"]
-    F --> G[("🔗 Hash-chained audit<br/>Catalyst Data Store")]
+    F --> G[("🔗 Hash-chained audit<br/>tamper-evident")]
 
     style X1 fill:#7f1d1d,stroke:#ef4444,color:#fff
     style X2 fill:#7f1d1d,stroke:#ef4444,color:#fff
@@ -225,7 +225,7 @@ seq 1 │ prev_hash = 777134407503ed2a58c5877dca8b82643dc945ab5382940d9ffbbf2585
       │ entry_hash = 9dfe23537f094b92914ae1511df9bf069db8bf54e844957eec4acaa08e146823
 ```
 
-Live rows from Catalyst Data Store. **Edit any row and the chain breaks at that exact sequence number.** You cannot quietly alter who looked up whom. `actor` and `query_text` are **PII-classified at the database level** (DPDP).
+The hash-chain is **live and tamper-evident in every build** (in-memory here; the Catalyst Data Store adapter is written and interface-compatible). **Edit any row and the chain breaks at that exact sequence number.** You cannot quietly alter who looked up whom. `actor` and `query_text` are **PII-classified at the database level** (DPDP).
 
 ---
 
@@ -304,7 +304,7 @@ Profiling showed `resolve()` was **83% of runtime** and effectively O(n²).
 |:---|:---|
 | **AppSail** | ✅ Backend deployed and live |
 | **QuickML — GLM-4.7-Flash** | ✅ Grounded narration, hallucination-guarded |
-| **Data Store** | ✅ Durable hash-chained audit trail |
+| **Data Store** | ◑ Durable audit adapter **written & interface-compatible**; runs in-memory in this build (hash-chain is live and tamper-evident either way). Flipping to Catalyst Data Store is a config change, not a rewrite. |
 | **Zia** | ❌ **Not used — it has no speech service.** |
 
 ### Voice: we changed the architecture rather than fake the feature
@@ -319,7 +319,7 @@ So voice runs on the **browser Web Speech API** (Kannada, `kn-IN`).
 
 ## The system
 
-**23 components · 32 API routes · 87 tests, all passing**
+**23 components · 33 API routes · 94 tests, all passing**
 
 | Component | What it does |
 |:---|:---|
@@ -338,7 +338,7 @@ So voice runs on the **browser Web Speech API** (Kannada, `kn-IN`).
 
 ## Every bug we ever shipped has a test that catches it now
 
-`tests/test_invariants.py` — **87 assertions, standard library only.**
+`tests/test_invariants.py` — **94 assertions, standard library only.**
 
 Including **three we caused while fixing the name matcher**, and caught:
 
@@ -355,7 +355,7 @@ Including **three we caused while fixing the name matcher**, and caught:
 ```bash
 python3 main.py                        # the whole system, port 9000
 
-python3 tests/test_invariants.py       # 87 tests
+python3 tests/test_invariants.py       # 94 tests
 python3 tests/steelman_benchmark.py    # KAVERI vs a REAL fuzzy matcher
 python3 tests/cross_validation.py      # 7 unseen corpora — the overfitting test
 python3 tests/adversarial_benchmark.py # held-out adversarial pairs
@@ -369,6 +369,7 @@ python3 tests/scale_benchmark.py       # does it scale?
 - **The data is synthetic.** 500 FIRs generated to the official KSP FIR schema. Real FIR data is not available to a hackathon team, and using it without authorisation would be a privacy violation.
 - **The name matcher alone is mediocre** — F1 ≈ 0.72 on held-out adversarial pairs. The **system** scores 6/6 safe on the same set, because architecture, not string similarity, makes the decision. Reporting only the 1.000 would be dishonest.
 - **The graph is in-process.** NetworkX, not Neo4j. The driver is written and interface-compatible; the benchmark above explains why we did not swap.
+- **The database and audit are in-memory in this build.** The 500 FIRs load into in-memory SQLite and the audit hash-chain lives in-process — both rebuild on restart. Durable adapters (Catalyst Data Store) are written and interface-compatible; we ran in-memory so the demo is fast and reproducible on synthetic data. Persistence is a config change, not a rewrite.
 - **The ingestion cap is a cliff, not a curve.** Named above. Not solved.
 - **This is not predictive policing.** KAVERI does not predict who will commit a crime. It surfaces links that **already exist** in records the police **already hold**, cites them, and asks a **human to verify** before acting.
 

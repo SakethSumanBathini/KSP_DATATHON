@@ -58,7 +58,11 @@
   }
 
   body {
-    @apply bg-black text-white antialiased;
+    /* Themed, not hardcoded. --color-black = white in light mode (:root), black in dark (.dark);
+       --color-white is the inverse. This is what lets the sun/moon toggle switch the whole page. */
+    background-color: rgb(var(--color-black));
+    color: rgb(var(--color-white));
+    @apply antialiased;
     font-family: 'Outfit', system-ui, sans-serif;
   }
 }

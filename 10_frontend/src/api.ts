@@ -1,116 +1,71 @@
+export const API_BASE = "https://kaveri-backend-50043711203.development.catalystappsail.in";
+
 /**
- * KAVERI API CLIENT
+ * CATALYST'S ZGS GATEWAY REJECTS CORS PREFLIGHT (OPTIONS) BEFORE IT REACHES FLASK.
  *
- * ─────────────────────────────────────────────────────────────────────────────
- *  WHY THIS FILE EXISTS — a bug that would have killed the live demo
- * ─────────────────────────────────────────────────────────────────────────────
+ * A browser sends a preflight OPTIONS whenever a cross-origin request is "non-simple" — which is
+ * triggered by (a) an Authorization header, or (b) a Content-Type the browser doesn't consider
+ * simple, such as application/json. Catalyst AppSail's front-door proxy (Server: ZGS) answers that
+ * OPTIONS itself with INVALID_REQUEST_METHOD, so our Flask CORS headers never run and every call
+ * dies as "Failed to fetch" — even though curl/PowerShell (which don't preflight) get 200.
  *
- *  The first version hardcoded a JWT:
+ * The fix is to make EVERY request "simple", so no preflight is ever emitted:
+ *   1. Login POST uses Content-Type: text/plain  (a CORS-simple type) instead of application/json.
+ *      The body is still JSON text; Flask reads it with get_json(force=True), which ignores the
+ *      declared type. No preflight.
+ *   2. Data calls carry the token as ?token=<t> in the URL, NOT as an Authorization header. The
+ *      backend's _caller() already accepts ?token= as a fallback (browser-clickable demo links),
+ *      so this is fully supported. No auth header => no preflight.
  *
- *      const TOKEN = "eyJhbGciOiJIUzI1NiIs...";
- *
- *  That token had TWO independent death clocks:
- *
- *    1. It expires 8 hours after it was minted. Fine today. Dead tomorrow.
- *
- *    2. WORSE — the server's signing secret is regenerated on every container
- *       restart:
- *
- *           JWT_SECRET = os.getenv("KAVERI_JWT_SECRET")
- *                        or base64(os.urandom(32))     <-- RANDOM
- *
- *       So ANY `catalyst deploy` silently invalidates every previously issued
- *       token. The hardcoded one is dead the moment the backend is redeployed.
- *
- *  And the failure is SILENT. /reasoning/identity/:id returns 401, the code does
- *  `if (d.plain_language) setReasoning(...)`, the field is missing, nothing is set,
- *  no error is thrown. The Identity screen renders perfectly — minus the single
- *  paragraph that is the entire point of the product. In front of judges you would
- *  not know anything was wrong.
- *
- *  THE FIX (both halves are required):
- *
- *    A. Backend: set KAVERI_JWT_SECRET in the Catalyst console so the signing key
- *       survives restarts. Without this, NOTHING can hold a token across a deploy.
- *
- *    B. Frontend (this file): mint a FRESH token at startup via POST /auth/login.
- *       Never hardcode one. Re-mint automatically on 401.
- *
- *  Note which routes actually need auth — measured, not assumed:
- *      GET  /health                 -> 200 without a token
- *      GET  /investigate/:id        -> 200 without a token
- *      POST /converse               -> 200 without a token
- *      GET  /reasoning/identity/:id -> 401 WITHOUT A TOKEN   <-- the one that matters
- *
- *  It is exactly the most important screen that is gated. That is why this broke
- *  quietly instead of loudly.
- * ─────────────────────────────────────────────────────────────────────────────
+ * This is exactly how the original working frontend authenticated. The rewrite had switched to
+ * Bearer + JSON, which is cleaner in theory but preflights, which ZGS blocks.
  */
 
-export const API =
-  "https://kaveri-backend-50043711203.development.catalystappsail.in";
+let currentToken: string | null = null;
 
-let token: string | null = null;
-let inflight: Promise<string | null> | null = null;
+export async function getToken(forceRefresh = false): Promise<string> {
+  if (currentToken && !forceRefresh) {
+    return currentToken;
+  }
 
-/** Mint a fresh token. Cached for the session; re-minted automatically on 401. */
-export async function getToken(): Promise<string | null> {
-  if (token) return token;
-  if (inflight) return inflight;
+  // text/plain keeps this a CORS-simple request => no preflight => ZGS lets it through.
+  const res = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ kgid: 'demo_user', role: 'scrb_analyst' }),  // state-wide role the UI needs (sidebar says SCRB Analyst)
+  });
 
-  inflight = (async () => {
-    try {
-      // text/plain avoids the CORS pre-flight. The backend uses get_json(force=True),
-      // so it parses the body regardless of Content-Type. A POST with
-      // application/json triggers an OPTIONS pre-flight that fails on this host.
-      const r = await fetch(`${API}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({
-          kgid: "DEMO-SCRB",
-          role: "scrb_analyst", // sees all 500 cases (station_officer sees 30)
-        }),
-      });
-      if (!r.ok) {
-        console.error("[KAVERI] /auth/login failed:", r.status);
-        return null;
-      }
-      const d = await r.json();
-      token = d.token ?? d.access_token ?? null;
-      if (!token) console.error("[KAVERI] /auth/login returned no token:", d);
-      return token;
-    } catch (e) {
-      console.error("[KAVERI] /auth/login threw:", e);
-      return null;
-    } finally {
-      inflight = null;
-    }
-  })();
+  if (!res.ok) {
+    throw new Error('Failed to authenticate');
+  }
 
-  return inflight;
+  const data = await res.json();
+  currentToken = data.token || data.access_token; // backend returns { token: ... }
+  return currentToken as string;
 }
 
-/**
- * Fetch with auth. Throws on failure — DO NOT swallow it.
- * Silent catches are why the Identity screen failed invisibly in the first place.
- */
-export async function apiFetch(path: string, init?: RequestInit): Promise<any> {
-  const t = await getToken();
-  const sep = path.includes("?") ? "&" : "?";
-  const url = `${API}${path}${t ? `${sep}token=${t}` : ""}`;
+export async function apiFetch(endpoint: string, options: RequestInit = {}): Promise<any> {
+  let token = await getToken();
 
-  let r = await fetch(url, init);
+  const withToken = (t: string) => {
+    const base = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
+    const sep = base.includes('?') ? '&' : '?';
+    return `${base}${sep}token=${encodeURIComponent(t)}`;
+  };
 
-  // token expired or server restarted with a new secret -> mint a new one, retry ONCE
-  if (r.status === 401) {
-    console.warn("[KAVERI] 401 — token stale (server restart?), re-minting…");
-    token = null;
-    const t2 = await getToken();
-    if (t2) r = await fetch(`${API}${path}${sep}token=${t2}`, init);
+  // No Authorization header, no application/json — the token rides in the URL, so the request
+  // stays CORS-simple and never preflights.
+  let res = await fetch(withToken(token), options);
+
+  // token stale (server restarted with a new secret) -> mint a fresh one and retry ONCE
+  if (res.status === 401) {
+    token = await getToken(true);
+    res = await fetch(withToken(token), options);
   }
 
-  if (!r.ok) {
-    throw new Error(`${path} -> HTTP ${r.status}`);
+  if (!res.ok) {
+    throw new Error(`API Error: ${res.status} ${res.statusText}`);
   }
-  return r.json();
+
+  return res.json();
 }

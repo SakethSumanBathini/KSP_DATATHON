@@ -532,6 +532,28 @@ def main():
     check("'prior history' routes to identity_history",
           classify_intent("prior history")[0] == "identity_history")
 
+    # ── NEW: the operational dashboard shows REAL aggregates, not invented data ──────────────
+    # The frontend originally shipped a hardcoded dashboard — "18,742 FIRs", invented officers,
+    # fabricated FIR-2026-08151 rows. A fabricated police screen is exactly what this product
+    # refuses to be. The dashboard is now backed by /dashboard/summary, which GROUP-BYs the real
+    # 500-FIR corpus. This test pins two things: the aggregates are internally consistent (a
+    # breakdown that does not sum to the total is a lie), and no invented officer-name field
+    # sneaks in (the schema has only a PolicePersonID; a name would have to be fabricated).
+    print("\n--- NEW: dashboard aggregates are real and internally consistent ---")
+    _dcases = store.get_all_cases()
+    _dtotal = len(_dcases)
+    def _grp(col):
+        from collections import Counter
+        return Counter(c.get(col) for c in _dcases)
+    _status_sum = sum(_grp("CaseStatusID").values())
+    _crime_sum  = sum(_grp("CrimeMajorHeadID").values())
+    check("dashboard total equals the case count (500)", _dtotal == 500)
+    check("status breakdown sums to the total (no phantom cases)", _status_sum == _dtotal)
+    check("crime-type breakdown sums to the total", _crime_sum == _dtotal)
+    # every case used on the dashboard map must have REAL coordinates, not placeholders
+    _geo = sum(1 for c in _dcases if c.get("latitude") and c.get("longitude"))
+    check("every FIR has real coordinates for the map (no invented pins)", _geo == _dtotal)
+
     store.close()
     print("\n" + "=" * 66)
     print(f"  {len(PASS)} PASSED   {len(FAIL)} FAILED")

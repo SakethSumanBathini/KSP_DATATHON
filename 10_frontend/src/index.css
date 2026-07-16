@@ -3,9 +3,63 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --color-black: 248 250 252;
+    --color-white: 15 23 42;
+    --color-panel: 255 255 255;
+    --color-panel-hover: 241 245 249;
+    --color-panel-active: 226 232 240;
+    
+    --color-neutral-300: 51 65 85;
+    --color-neutral-400: 71 85 105;
+    --color-neutral-500: 100 116 139;
+    --color-neutral-600: 148 163 184;
+    --color-neutral-700: 203 213 225;
+    --color-neutral-800: 226 232 240;
+    --color-neutral-900: 241 245 249;
+    
+    --color-cyan-50: 240 249 255;
+    --color-cyan-300: 14 165 233;
+    --color-cyan-400: 2 132 199;
+    --color-cyan-500: 3 105 161;
+    --color-cyan-900: 186 230 253;
+    --color-cyan-950: 224 242 254;
+    
+    --color-red-400: 220 38 38;
+    --color-red-500: 185 28 28;
+    --color-red-950: 254 226 226;
+  }
+
+  .dark {
+    --color-black: 0 0 0;
+    --color-white: 255 255 255;
+    --color-panel: 5 5 5;
+    --color-panel-hover: 10 10 10;
+    --color-panel-active: 15 15 15;
+    
+    --color-neutral-300: 212 212 212;
+    --color-neutral-400: 163 163 163;
+    --color-neutral-500: 115 115 115;
+    --color-neutral-600: 82 82 82;
+    --color-neutral-700: 64 64 64;
+    --color-neutral-800: 38 38 38;
+    --color-neutral-900: 23 23 23;
+    
+    --color-cyan-50: 236 254 255;
+    --color-cyan-300: 103 232 249;
+    --color-cyan-400: 34 211 238;
+    --color-cyan-500: 6 182 212;
+    --color-cyan-900: 22 78 99;
+    --color-cyan-950: 8 47 73;
+    
+    --color-red-400: 248 113 113;
+    --color-red-500: 239 68 68;
+    --color-red-950: 69 10 10;
+  }
+
   body {
-    @apply bg-bg-base text-text-primary antialiased;
-    font-family: 'Inter', system-ui, sans-serif;
+    @apply bg-black text-white antialiased;
+    font-family: 'Outfit', system-ui, sans-serif;
   }
 }
 
@@ -18,10 +72,37 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-border-subtle rounded-full;
+  @apply bg-cyan-900/30 border border-cyan-500/20 rounded-full;
 }
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-text-muted;
+  @apply bg-cyan-500/50 border-cyan-400;
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100vh); }
+  100% { transform: translateY(100vh); }
+}
+
+.scanline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 20vh;
+  background: linear-gradient(to bottom, transparent, rgba(34,211,238,0.03) 50%, rgba(34,211,238,0.1) 100%);
+  border-bottom: 1px solid rgba(34,211,238,0.2);
+  animation: scanline 10s linear infinite;
+  pointer-events: none;
+  z-index: 50;
+}
+
+@keyframes pulse-node {
+  0%, 100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.4), inset 0 0 10px rgba(0,0,0,0.5); }
+  50% { box-shadow: 0 0 30px rgba(239, 68, 68, 0.8), inset 0 0 5px rgba(0,0,0,0.2); }
+}
+
+.pulse-node-danger {
+  animation: pulse-node 2s infinite alternate;
 }
 
 /* React Flow customizations */

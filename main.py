@@ -87,7 +87,14 @@ ACCESS = AccessControl(STORE)
 def _cors(resp):
     resp.headers["Access-Control-Allow-Origin"] = "*"       # prototype: any origin
     resp.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-    resp.headers["Access-Control-Allow-Headers"] = "Content-Type, X-Role"
+    # Authorization ADDED. The frontend's api.ts sends "Authorization: Bearer <token>". A browser
+    # preflights any request carrying that header and asks, via Access-Control-Request-Headers,
+    # whether it is allowed. This list is the answer. It previously named only Content-Type and a
+    # legacy X-Role, so every authenticated call from the browser was blocked at preflight —
+    # surfacing as "Failed to fetch" while curl (which does not preflight) still returned 200.
+    # The old frontend passed the token as ?token= and never carried this header, which is why the
+    # gap stayed hidden until the UI switched to Bearer auth.
+    resp.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, X-Role"
     resp.headers["Access-Control-Max-Age"] = "3600"
     return resp
 
@@ -1438,6 +1445,87 @@ def home():
         "roles": list(ROLES.keys()),
         "team": "Agentron",
     })
+
+
+@app.route("/dashboard/summary")
+def dashboard_summary():
+    """
+    Operational dashboard — REAL aggregates over the 500 FIRs, computed live from the store.
+
+    Every number here is a GROUP BY over CaseMaster, not a literal. The frontend used to ship a
+    hardcoded dashboard ("18,742 FIRs", invented officers) — a fabricated police screen, the exact
+    thing this product refuses to be. So the counts are derived, and the two things the schema does
+    NOT contain (officer NAMES — only PolicePersonID — and per-incident victim identities) are
+    simply not returned rather than invented. What the data cannot back, the dashboard does not show.
+
+    Gated like every other data route: no token, no data.
+    """
+    claims, _v = _caller()
+    if claims is None:
+        return _unauth()
+    c = STORE.conn
+    def rows(sql):
+        return [dict(r) for r in c.execute(sql).fetchall()]
+
+    total = c.execute("SELECT COUNT(*) n FROM CaseMaster").fetchone()["n"]
+
+    status = rows("""SELECT s.CaseStatusName label, COUNT(*) value
+        FROM CaseMaster cm JOIN CaseStatusMaster s ON s.CaseStatusID=cm.CaseStatusID
+        GROUP BY s.CaseStatusName ORDER BY value DESC""")
+
+    crime_type = rows("""SELECT h.CrimeGroupName label, COUNT(*) value
+        FROM CaseMaster cm JOIN CrimeHead h ON h.CrimeHeadID=cm.CrimeMajorHeadID
+        GROUP BY h.CrimeGroupName ORDER BY value DESC""")
+
+    gravity = rows("""SELECT g.LookupValue label, COUNT(*) value
+        FROM CaseMaster cm JOIN GravityOffence g ON g.GravityOffenceID=cm.GravityOffenceID
+        GROUP BY g.LookupValue ORDER BY value DESC""")
+
+    district = rows("""SELECT d.DistrictName label, COUNT(*) value
+        FROM CaseMaster cm JOIN Unit u ON u.UnitID=cm.PoliceStationID
+        JOIN District d ON d.DistrictID=u.DistrictID
+        GROUP BY d.DistrictName ORDER BY value DESC LIMIT 8""")
+
+    trend = rows("""SELECT substr(CrimeRegisteredDate,1,7) label, COUNT(*) value
+        FROM CaseMaster WHERE CrimeRegisteredDate IS NOT NULL
+        GROUP BY label ORDER BY label""")
+
+    # map markers — REAL lat/long from the FIR record (500/500 have coordinates)
+    markers = rows("""SELECT cm.CaseMasterID id, cm.CrimeNo fir, cm.latitude, cm.longitude,
+               h.CrimeGroupName crimeType, s.CaseStatusName status, g.LookupValue gravity
+        FROM CaseMaster cm
+        JOIN CrimeHead h ON h.CrimeHeadID=cm.CrimeMajorHeadID
+        JOIN CaseStatusMaster s ON s.CaseStatusID=cm.CaseStatusID
+        JOIN GravityOffence g ON g.GravityOffenceID=cm.GravityOffenceID
+        WHERE cm.latitude IS NOT NULL AND cm.longitude IS NOT NULL LIMIT 60""")
+
+    recent = rows("""SELECT cm.CaseMasterID case_id, cm.CrimeNo fir, d.DistrictName district,
+               h.CrimeGroupName crimeType, s.CaseStatusName status,
+               g.LookupValue gravity, cm.CrimeRegisteredDate date
+        FROM CaseMaster cm
+        JOIN CrimeHead h ON h.CrimeHeadID=cm.CrimeMajorHeadID
+        JOIN CaseStatusMaster s ON s.CaseStatusID=cm.CaseStatusID
+        JOIN GravityOffence g ON g.GravityOffenceID=cm.GravityOffenceID
+        JOIN Unit u ON u.UnitID=cm.PoliceStationID
+        JOIN District d ON d.DistrictID=u.DistrictID
+        ORDER BY cm.CrimeRegisteredDate DESC LIMIT 12""")
+
+    return app.response_class(
+        json.dumps({
+            "total_firs": total,
+            "status_breakdown": status,
+            "crime_type_breakdown": crime_type,
+            "gravity_breakdown": gravity,
+            "district_breakdown": district,
+            "monthly_trend": trend,
+            "map_markers": markers,
+            "recent_firs": recent,
+            "note": ("All figures are live GROUP BY aggregates over the 500-FIR corpus. "
+                     "Officer names and victim identities are intentionally omitted — the FIR "
+                     "schema carries only a PolicePersonID, and this dashboard shows no field it "
+                     "cannot source from the record."),
+        }, default=str, ensure_ascii=False),
+        mimetype="application/json")
 
 
 @app.route("/health")

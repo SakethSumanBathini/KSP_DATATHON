@@ -128,6 +128,19 @@ def _strip_reasoning(text):
     for marker in ("**Final Briefing", "**Briefing", "FINAL BRIEFING", "BRIEFING:"):
         if marker in t:
             t = t.split(marker, 1)[1].lstrip(":*# \n")
+            # THE STRIPPER CAN ORPHAN A BOLD MARKER.
+            # The lstrip above must be greedy — it has to eat scaffolding like "**\n\n* **".
+            # But greed does not know where the scaffolding ends and the answer begins: given
+            # "**Briefing**\n\n* **Modus Operandi:** ..." it swallowed the OPENING "**" of the
+            # first heading and left its closing half behind, so the officer read
+            #     "Modus Operandi:** The entry method and timing..."
+            # An unmatched marker renders as literal asterisks. If the first line now carries an
+            # odd number of "**", the survivor is the orphan — drop it.
+            _nl = t.find("\n")
+            _head = t if _nl == -1 else t[:_nl]
+            if _head.count("**") % 2 == 1:
+                _head = _head.replace("**", "", 1)
+                t = _head + ("" if _nl == -1 else t[_nl:])
             break
     else:
         # if it opens with an analysis scaffold, drop those blocks
@@ -245,7 +258,7 @@ def translate_to_kannada_chunked(text, timeout=24):
     try:
         raw = _glm_chat([{"role": "system", "content": system},
                          {"role": "user", "content": numbered}],
-                        max_tokens=900, temperature=0.1, timeout=timeout)
+                        max_tokens=1400, temperature=0.1, timeout=timeout)
     except Exception as e:
         return _fail(f"model_call_failed:{type(e).__name__}")
 
@@ -260,6 +273,23 @@ def translate_to_kannada_chunked(text, timeout=24):
             continue
     if not got:
         return _fail("markers_unparseable", raw_head=raw[:160])
+
+    # TRUNCATION IS A PROPERTY OF THE RESPONSE, NOT OF THE LINE.
+    #
+    # A fourth way to lose a sentence, found by reading a live Kannada briefing: the model ran out
+    # of output budget partway down the list. Lines it never reached simply had no marker and fell
+    # back to English — correct. But the line it was CUT ON came back looking healthy:
+    #     "...ಹೆಚ್ಚಿಸಿ ಮತ್ತು ನಿವಾಸಿಗಳಿಗೆ ಎ"        <- stops on a bare vowel, mid-word
+    # Its source ("Advise patrol density + resident alerts.") carries no digits, so the number
+    # guard compared [] to [] and passed it. It cleared too_short. And it ended PAST every token
+    # in `dangling` — that list catches the endings we had already seen, which is exactly what a
+    # list of known endings can do.
+    #
+    # No per-line test can see this, because the line is not what went wrong; the RESPONSE is.
+    # If fewer markers came back than we asked for, the output was cut, and the highest-numbered
+    # marker we received is the one it was interrupted on. Distrust precisely that line.
+    output_was_cut = len(got) < len(lines)
+    cut_line_no    = max(got) if (output_was_cut and got) else None
 
     out, kept, failures = [], 0, []
     for i, src_line in enumerate(lines):
@@ -277,14 +307,17 @@ def translate_to_kannada_chunked(text, timeout=24):
             # intact is necessary, not sufficient: the sentence also has to EXIST.
             too_short = len(cand.strip()) < 0.45 * len(src_line.strip())
             dangling  = cand.strip().endswith(("ಮತ್ತು", "and", ",", "-", "—"))
-            if kn_nums == src_nums and not too_short and not dangling:
+            was_cut_here = (i + 1) == cut_line_no
+            if kn_nums == src_nums and not too_short and not dangling and not was_cut_here:
                 cand = cand.replace("\u0cab\u0cc8\u0cb0\u0ccd",
                                     "\u0c8e\u0cab\u0ccd\u200c\u0c90\u0c86\u0cb0\u0ccd")
                 out.append(cand); kept += 1
                 continue
             failures.append({"line": src_line.strip()[:80],
                              "en_numbers": src_nums, "kn_numbers": kn_nums,
-                             "reason": ("truncated" if (too_short or dangling) else "numbers changed")})
+                             "reason": ("response_truncated" if was_cut_here
+                                        else "truncated" if (too_short or dangling)
+                                        else "numbers changed")})
         else:
             failures.append({"line": src_line.strip()[:80],
                              "en_numbers": src_nums, "kn_numbers": ["<line missing>"]})

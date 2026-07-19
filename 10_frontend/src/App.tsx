@@ -116,10 +116,35 @@ function normalizeVoice(text: string): string {
   return t.trim();
 }
 
+// Spoken English numbers above ten. NUMWORDS only covered 1-10, so "case fourteen" fell through
+// to null and — worse — "case two hundred" matched the bare "two" and CONFIDENTLY OPENED CASE 2.
+// A system whose entire thesis is refusing to be confidently wrong must not silently open the
+// wrong case. This parser handles compounds ("two hundred" = 200, "twenty five" = 25) and returns
+// null when it finds no English number at all, so Kannada parsing below still gets its turn.
+const EN_UNITS: Record<string, number> = { one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9 };
+const EN_TEENS: Record<string, number> = { ten:10, eleven:11, twelve:12, thirteen:13, fourteen:14, fifteen:15, sixteen:16, seventeen:17, eighteen:18, nineteen:19 };
+const EN_TENS: Record<string, number> = { twenty:20, thirty:30, forty:40, fourty:40, fifty:50, sixty:60, seventy:70, eighty:80, ninety:90 };
+
+function englishNumberIn(tokens: string[]): number | null {
+  let value = 0, started = false;
+  for (const tok of tokens) {
+    if (EN_UNITS[tok] !== undefined)      { value += EN_UNITS[tok]; started = true; }
+    else if (EN_TEENS[tok] !== undefined) { value += EN_TEENS[tok]; started = true; }
+    else if (EN_TENS[tok] !== undefined)  { value += EN_TENS[tok]; started = true; }
+    else if (tok === 'hundred')           { value = (value || 1) * 100; started = true; }
+    else if (tok === 'and' && started)    { continue; }
+    else if (started)                     { break; }   // number ended; stop before unrelated words
+  }
+  return started && value > 0 ? value : null;
+}
+
 function caseNumberIn(text: string): string | null {
   text = normalizeVoice(text);   // repair "Fire 1"->"fir 1", "Keshwan"->"case 1" before parsing
   const digits = text.match(/\b(\d{1,3})\b/);
   if (digits) return digits[1];
+
+  const en = englishNumberIn(text.toLowerCase().split(/\s+/).filter(Boolean));
+  if (en !== null) return String(en);
 
   const isKannada = (s: string) => /[\u0C80-\u0CFF]/.test(s);
   const tokens = text.toLowerCase().split(/\s+/).filter(Boolean);

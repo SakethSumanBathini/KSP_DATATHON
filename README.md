@@ -339,6 +339,32 @@ So voice runs on the **browser Web Speech API** (Kannada, `kn-IN`).
 
 ---
 
+## The interface
+
+**4 screens · React 19 + TypeScript + Vite + Tailwind · ~2,100 lines · deployed on Vercel**
+
+Live at **[ksp-datathon-henna.vercel.app](https://ksp-datathon-henna.vercel.app/)** — it talks to the Catalyst backend above, so what you click is real data, not a mockup.
+
+| Screen | What an officer does there |
+|:---|:---|
+| **Command Center** | 500-FIR dashboard: live GIS markers (real FIR coordinates, coloured by gravity), filterable FIR table, and an AI panel you can point at any case 1–500. |
+| **Investigation Workspace** | Ask a case anything — typed or spoken, English or Kannada. Returns the cited briefing, crime network, **Identity Panel** (accused + resolved identity + linked FIRs + the shared phones/vehicles that corroborate them), and similar cases. |
+| **Identity Resolution** | The thesis, on screen: 2,277 / 2,369 / 0, a real merge with its reasoning, and refused pairs with identical names and no corroborating evidence. |
+| **Crime Analytics** | Trends, near-repeat clusters, and modus-operandi groupings. |
+
+**Voice** runs on the browser Web Speech API (`kn-IN` / `en-IN`) — audio never leaves the device. The transcript is repaired before parsing, because speech engines mishear police vocabulary: *"Fire 1" → FIR 1*, *"Keshwan" → case 1*, *"keys 1" → case 1*. Spoken numbers resolve in both scripts and in compound form — `case fourteen`, `case two hundred`, `ಒಂದು` all reach the right FIR. 45 spoken-number cases were run against the shipped parser and all resolve correctly; unlike the backend invariants, these are **not** yet in an automated suite.
+
+```bash
+cd 10_frontend
+npm install
+npm run dev          # http://localhost:5173
+npm run build        # production build -> dist/
+```
+
+The backend URL is compiled in, so the local frontend talks to the **live** Catalyst backend with no configuration.
+
+---
+
 ## Every bug we ever shipped has a test that catches it now
 
 `tests/test_invariants.py` — **94 assertions, standard library only.**
@@ -356,7 +382,9 @@ Including **three we caused while fixing the name matcher**, and caught:
 ## Run it
 
 ```bash
-python3 main.py                        # the whole system, port 9000
+pip install -r requirements.txt        # REQUIRED FIRST — flask, networkx, jellyfish, faker
+
+python3 main.py                        # the whole backend, port 9000
 
 python3 tests/test_invariants.py       # 94 tests
 python3 tests/steelman_benchmark.py    # KAVERI vs a REAL fuzzy matcher

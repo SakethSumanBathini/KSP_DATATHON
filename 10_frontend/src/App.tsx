@@ -54,6 +54,7 @@ interface InvestigationData {
   sections?: string[];
   narrative?: string;
   narrative_source?: string;
+  refused?: boolean;          // ethical guard fired — this is a deliberate refusal, not a failure
   citations?: number[];
   network?: {
     linked_cases?: string[];
@@ -291,6 +292,7 @@ export default function App() {
           case_id: d.case_id ?? prev?.case_id ?? (currentCase.current ? String(currentCase.current) : '—'),
           narrative: d.answer || d.narrative || d.clarification_needed || 'No answer returned.',
           narrative_source: d.narrative_source,
+          refused: d.__refusal === true,
           citations: d.citations ?? prev?.citations,
         }));
       }
@@ -682,7 +684,11 @@ export default function App() {
                         >
                           {speaking ? <Square size={16} className="fill-current" /> : <Volume2 size={16} />}
                         </button>
-                        {data.narrative_source === 'catalyst_glm' ? (
+                        {data.refused ? (
+                          <div className="flex items-center gap-2 bg-red-950/40 border border-red-500/50 px-3 py-1.5 rounded text-red-400 text-[10px] font-mono font-bold uppercase tracking-widest">
+                            <Shield size={12} /> Ethical guard · refused
+                          </div>
+                        ) : data.narrative_source === 'catalyst_glm' ? (
                           <div className="flex items-center gap-2 bg-cyan-950/30 border border-cyan-500/30 px-3 py-1.5 rounded text-cyan-400 text-[10px] font-mono font-bold uppercase tracking-widest">
                             <Shield size={12} /> Catalyst GLM-4.7
                           </div>

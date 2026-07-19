@@ -63,6 +63,23 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}): Pro
     res = await fetch(withToken(token), options);
   }
 
+  // AN ETHICAL REFUSAL IS AN ANSWER, NOT A TRANSPORT FAILURE.
+  //
+  // The guard returns 403 with the reason in the body. Treating every non-2xx as an exception
+  // turned the single most deliberate thing this system does — refusing to profile by caste —
+  // into "API Error: 403" on screen. To an officer that reads as a broken tool, not a principled
+  // one. We surface the refusal so the UI can say what happened and why.
+  //
+  // Narrow on purpose: an ethical refusal carries `allowed:false` with a reason. A jurisdiction
+  // denial carries `access_denied:true` and must stay an error — it IS a failure to authorise.
+  if (res.status === 403) {
+    const body = await res.json().catch(() => null);
+    if (body && body.allowed === false && (body.refused || body.answer)) {
+      return { ...body, __refusal: true };
+    }
+    throw new Error(`API Error: ${res.status} ${res.statusText}`);
+  }
+
   if (!res.ok) {
     throw new Error(`API Error: ${res.status} ${res.statusText}`);
   }

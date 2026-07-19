@@ -311,6 +311,12 @@ def translate_to_kannada_chunked(text, timeout=24):
             if kn_nums == src_nums and not too_short and not dangling and not was_cut_here:
                 cand = cand.replace("\u0cab\u0cc8\u0cb0\u0ccd",
                                     "\u0c8e\u0cab\u0ccd\u200c\u0c90\u0c86\u0cb0\u0ccd")
+                # ONE LIST, TWO SCRIPTS. The model translates the first "FIR" of a run and leaves
+                # the rest, so a Kannada briefing carried: "\u0c8e\u0cab\u0ccd\u200c\u0c90\u0c86\u0cb0\u0ccd 2, FIR 3, FIR 4...".
+                # Both spellings are correct; mixing them inside one sentence is not. The number
+                # guard has already passed at this point, and this touches no digits — it only
+                # settles which spelling of the acronym the officer reads.
+                cand = _re.sub(r"\bFIR\b", "\u0c8e\u0cab\u0ccd\u200c\u0c90\u0c86\u0cb0\u0ccd", cand)
                 out.append(cand); kept += 1
                 continue
             failures.append({"line": src_line.strip()[:80],

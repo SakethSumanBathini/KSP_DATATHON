@@ -124,7 +124,8 @@ class BurglaryPlaybook:
             sc = brief["similar_cases"][:3]
             refs = ", ".join(f"FIR {s['case_id']} ({s['score']:.2f})" for s in sc)
             brief["recommended_leads"].append(
-                f"Modus operandi matches {len(brief['similar_cases'])} other case(s): {refs}. "
+                f"Modus operandi matches {len(brief['similar_cases'])} other case(s); "
+                f"closest {len(sc)} by score: {refs}. "
                 f"Compare entry method and timing — a common offender is possible but NOT "
                 f"established; no shared evidence links these cases yet.")
 

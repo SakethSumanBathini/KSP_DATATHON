@@ -41,7 +41,7 @@ from orchestrator import Orchestrator
 from playbook import BurglaryPlaybook
 from trust import AccessControl
 from risk_score import OffenderRiskScorer, render as render_risk
-from socio import SociologicalAnalyser, EthicalGuard
+from socio import SociologicalAnalyser, EthicalGuard, PROTECTED_OFFENDER_ATTRS, guard_offender_profiling
 from trends import TrendAnalyser
 from money_trail import MoneyTrailAnalyser
 from timeline_export import CaseTimeline, export_conversation
@@ -1092,6 +1092,26 @@ def converse():
     role = claims["role"]
     if not q:
         return jsonify({"error": "query required"}), 400
+
+    # THE ETHICAL GUARD, ON THE SURFACE OFFICERS ACTUALLY USE.
+    #
+    # /sociology/offender-profile/<attr> has always refused caste and religion. The chat had no
+    # such check — and it failed in a way that is worse than answering. "list accused by caste"
+    # matched the *accused* intent, silently dropped "by caste", and returned a list of names.
+    # It answered a question nobody asked, and to the officer that reads as compliance.
+    #
+    # A refusal that only exists on an endpoint nobody types into is not a policy, it is a
+    # decoration. Same words, same policy object, enforced here too. Tokenised (not substring)
+    # matching, so "history" can never be mistaken for a protected attribute.
+    _tokens = set(q.lower().replace(",", " ").replace(".", " ").replace("?", " ")
+                   .replace("'", " ").replace('"', " ").split())
+    _hit = _tokens & PROTECTED_OFFENDER_ATTRS
+    if _hit:
+        try:
+            guard_offender_profiling(sorted(_hit)[0])          # raises with the canonical message
+        except EthicalGuard as e:
+            return jsonify({"allowed": False, "attribute": sorted(_hit)[0],
+                            "refused": str(e), "answer": str(e)}), 403
 
     sess = _get_session(sid, role)
     sess.role = role

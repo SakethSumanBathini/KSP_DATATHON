@@ -53,6 +53,14 @@ INTENT_KEYWORDS = {
         "en": ["victim", "complainant", "who was targeted", "who reported"],
         "kn": ["ಸಂತ್ರಸ್ತ", "ದೂರುದಾರ", "ವಿಕ್ಟಿಮ್", "ಕಂಪ್ಲೇನಂಟ್"],
     },
+    "summary": {
+        # "investigate case 1", "brief me on case 1", "tell me about case 1" all returned
+        # "I could not map that to a capability" — the most natural way an officer would open a
+        # case was the one phrasing the router had no word for.
+        "en": ["investigate", "brief me", "briefing", "summarise", "summarize", "summary",
+               "tell me about", "overview", "what happened"],
+        "kn": ["\u0cb8\u0cbe\u0cb0\u0cbe\u0c82\u0cb6", "\u0cb5\u0cbf\u0cb5\u0cb0", "\u0cb8\u0cae\u0cb0\u0cbf"],
+    },
     "status": {
         "en": ["status", "investigation status", "where does it stand", "chargesheet"],
         "kn": ["ಸ್ಥಿತಿ", "ತನಿಖೆ", "ಸ್ಟೇಟಸ್", "ಚಾರ್ಜ್‌ಶೀಟ್"],

@@ -1307,6 +1307,40 @@ def _answer_for(ctx, role):
             learned["person_id"] = acc[0]["AccusedMasterID"]     # <-- remember who we just named
         names = ", ".join(f"{a['AccusedName']} (id {a['AccusedMasterID']})" for a in acc)
         return ("Accused on this FIR: " + names), [cid], learned
+    if intent == "victim" and cid:
+        # THE ROUTER COULD PRODUCE THIS INTENT. NOTHING COULD ANSWER IT.
+        # classify_intent has emitted "victim" and "status" since the beginning, but neither had
+        # a branch here, so both fell through to "I could not map that to a capability" - the
+        # router named the capability and the answer layer denied it existed. Both are named
+        # explicitly in req 1 ("FIRs, accused, victims, locations, investigation status").
+        # The routing test passed the whole time because it asserts the INTENT, not the ANSWER.
+        vics = STORE.get_victims_for_case(cid)
+        if not vics:
+            return (f"FIR {cid} has no named victim on record \u2014 property offences are often "
+                    f"registered on a complainant rather than a named victim."), [cid], learned
+        names = ", ".join(f"{v['VictimName']} (age {v['AgeYear']})" for v in vics)
+        # Victim identity is the most sensitive field in an FIR. Route it through the same masking
+        # every other endpoint uses, so a new capability cannot become a side door around PII.
+        names = _pii({"n": names}, role)["n"]
+        return (f"Victim(s) on FIR {cid}: {names}."), [cid], learned
+
+    if intent == "status" and cid:
+        case = STORE.get_case(cid)
+        if case:
+            st = STORE.get_case_status_name(case["CaseStatusID"]) or "not recorded"
+            return (f"FIR {cid} is currently '{st}'."), [cid], learned
+
+    if intent == "summary" and cid:
+        case = STORE.get_case(cid)
+        acc = STORE.get_accused_for_case(cid)
+        st = STORE.get_case_status_name(case["CaseStatusID"]) if case else None
+        names = ", ".join(a["AccusedName"] for a in acc) if acc else "no accused on record"
+        b = PLAYBOOK.investigate(cid)
+        linked = (b.get("network") or {}).get("linked_cases") or []
+        return (f"FIR {cid} \u2014 status '{st or 'not recorded'}'. Accused: {names}. "
+                f"Linked to {len(linked)} other case(s) through shared evidence. "
+                f"Ask for the network, timeline, risk, similar cases or money trail."), [cid], learned
+
     if intent == "risk" and pid:
         s = RISK.score(pid)
         if s:

@@ -11,6 +11,7 @@ PDF export: pure-stdlib PDF writer (no third-party dependency, so nothing extra 
 Catalyst's 256MB disk budget). Produces a valid PDF 1.4 with selectable text.
 """
 import sys, os, datetime, zlib
+import textwrap
 for p in ["02_relational_layer","03_graph_construction","05_entity_resolution"]:
     sys.path.insert(0, os.path.join(os.path.dirname(os.getcwd()), p))
 
@@ -134,6 +135,35 @@ def conversation_to_pdf(path, title, lines, meta=None):
     than silently dropping the characters.
     """
     W, H, M, LH, FS = 595, 842, 50, 14, 10          # A4 points
+
+    # PDF DOES NOT WRAP. A LONG LINE IS SILENTLY CUT AT THE PAGE EDGE.
+    # Found by reading an exported transcript: a briefing ended "...Ask " and the next question
+    # began on the same visual line. The answer was complete in the data - the page just stopped
+    # drawing it. An officer's saved record was losing its own content, which is worse than not
+    # offering the export at all, because it looks complete.
+    # 495pt of usable width at 10pt Helvetica is ~99 characters; 92 leaves room for wide glyphs.
+    # Measure the ESCAPED length: _esc() turns "(" into "\\(", so a line of exactly 92 characters
+    # can render at 94 and clip anyway. Wrap against what actually gets drawn, not the source.
+    WRAP = 92
+    def _fits(t):
+        return len(_esc(t)) <= WRAP
+
+    wrapped = []
+    for _ln in lines:
+        if _fits(_ln):
+            wrapped.append(_ln)
+            continue
+        _indent = len(_ln) - len(_ln.lstrip())
+        _pad = " " * _indent
+        _w = max(20, WRAP - _indent)
+        while _w > 20:
+            _segs = textwrap.wrap(_ln.strip(), _w) or [""]
+            if all(_fits(_pad + sg) for sg in _segs):
+                break
+            _w -= 4
+        wrapped.extend(_pad + sg for sg in _segs)
+    lines = wrapped
+
     page_lines, pages = [], []
     y = H - M - 30
     for ln in lines:

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, Shield, AlertTriangle, Search, Mic, CheckCircle2, Database, Users, Activity, Fingerprint, Square, CornerDownLeft, Volume2, Loader2, RadioTower } from 'lucide-react';
+import { LayoutDashboard, Shield, AlertTriangle, Search, Mic, CheckCircle2, Database, Users, Activity, Fingerprint, Square, CornerDownLeft, Volume2, Loader2, RadioTower, Download } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { IdentityResolutionView } from './IdentityResolutionView';
@@ -7,7 +7,7 @@ import { TheNumbersView } from './TheNumbersView';
 import { PoliceCommandDashboard } from './PoliceCommandDashboard';
 import { ReactFlow, Controls, Background, useNodesState, useEdgesState } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { apiFetch } from './api';
+import { apiFetch, signedUrl } from './api';
 
 /**
  * ════════════════════════════════════════════════════════════════════════════════════════════
@@ -683,6 +683,24 @@ export default function App() {
                             : 'bg-neutral-900 text-neutral-400 hover:text-cyan-400 hover:bg-cyan-950 hover:border-cyan-500/50 border border-neutral-800'}`}
                         >
                           {speaking ? <Square size={16} className="fill-current" /> : <Volume2 size={16} />}
+                        </button>
+                        <button
+                          onClick={async () => {
+                            // req 1 — "Save the Conversation History in PDF format locally".
+                            // Straight to the browser's save dialog: the transcript of what an
+                            // officer asked belongs on the officer's machine, not on our server.
+                            try {
+                              const url = await signedUrl('/export/conversation?session_id=web');
+                              window.open(url, '_blank');
+                            } catch {
+                              setError('Could not export the conversation.');
+                            }
+                          }}
+                          title="Save this conversation as a PDF"
+                          aria-label="Save conversation history as PDF"
+                          className="flex items-center gap-2 px-3 py-1.5 rounded border border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-cyan-400 hover:border-cyan-500/50 transition-colors text-[10px] font-mono font-bold uppercase tracking-widest"
+                        >
+                          <Download size={12} /> Save PDF
                         </button>
                         {data.refused ? (
                           <div className="flex items-center gap-2 bg-red-950/40 border border-red-500/50 px-3 py-1.5 rounded text-red-400 text-[10px] font-mono font-bold uppercase tracking-widest">

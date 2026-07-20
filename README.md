@@ -322,7 +322,7 @@ So voice runs on the **browser Web Speech API** (Kannada, `kn-IN`).
 
 ## The system
 
-**23 components · 33 API routes · 94 tests, all passing**
+**23 components · 34 API routes · 94 tests, all passing**
 
 | Component | What it does |
 |:---|:---|
@@ -331,6 +331,7 @@ So voice runs on the **browser Web Speech API** (Kannada, `kn-IN`).
 | **Modus Operandi** | Clusters need ≥2 discriminative tags — we killed a meaningless 77-case "afternoon" cluster. |
 | **Near-Repeat Analysis** | Spatio-temporal burglary clustering. |
 | **Money Trail** | Recovers a shared mule account across FIRs 36–39. |
+| **Decision Support** | Case timelines, and conversation history exported to PDF (`/export/conversation`) — a dependency-free PDF 1.4 writer, so nothing extra ships into Catalyst's disk budget. |
 | **Trends** | Benjamini-Hochberg FDR (q=0.10) — 20 uncorrected comparisons produce a "significant" finding by chance. |
 | **Socioeconomic** | `STATISTICAL_WARNING` on *every* correlation, because n=5 districts cannot support a causal claim. |
 | **Fairness Audit** | 4/5ths rule + proxy TVD. |

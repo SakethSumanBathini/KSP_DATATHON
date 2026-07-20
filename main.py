@@ -15,7 +15,7 @@ Endpoints:
 Catalyst serves this via the startup command (gunicorn/python). Reads PORT from env
 (Catalyst sets X_ZOHO_CATALYST_LISTEN_PORT), defaults to 9000 for local testing.
 """
-import os, sys, json, threading
+import os, sys, json, threading, tempfile
 
 # --- make the sibling component folders importable (same pattern as the components) ---
 BASE = os.path.dirname(os.path.abspath(__file__))
@@ -29,7 +29,7 @@ sys.path.insert(0, os.path.join(BASE, "vendor"))
 for sub in ["01_data_generator","02_relational_layer","03_graph_construction","04_extraction","05_entity_resolution","06_retrieval","07_orchestrator","08_trust_layer","09_burglary_playbook","11_risk_scoring","12_sociological","13_trends","14_financial","15_decision_support","16_catalyst","17_fairness","18_outcomes","19_modus_operandi","20_socioeconomic","21_financial_workflow","22_data_governance","23_reasoning_viz"]:
     sys.path.insert(0, os.path.join(BASE, sub))
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 
 # --- import the pipeline pieces ---
 from loader import RelationalStore
@@ -1469,6 +1469,58 @@ def home():
         "roles": list(ROLES.keys()),
         "team": "AstraVajra",
         "team_members": ["Bathini Saketh Suman", "Paavni Bansal", "Shaurya Sanyal", "S. Sreerevanth"],
+    })
+
+
+@app.route("/export/conversation")
+def export_conversation_pdf():
+    """
+    req 1 - "Save the Conversation History in PDF format locally".
+
+    The PDF writer has existed in 15_decision_support/timeline_export.py since the beginning and
+    was even imported at the top of this file - but nothing ever called it. A capability the
+    brief names explicitly was unreachable from any client, which is the same as not having it.
+
+    Returned as an attachment so the browser writes it to the officer's own machine. "Locally"
+    is the point: the transcript of what an officer asked is not something we keep a copy of.
+    """
+    claims, _visible = _caller()
+    if claims is None:
+        return _unauth()
+
+    sid = (request.args.get("session_id") or "").strip()
+    if not sid:
+        return jsonify({"error": "session_id required",
+                        "detail": "Pass ?session_id=<the id you used on /converse>."}), 400
+
+    # copy the turns under the lock; do not hold it across PDF generation
+    with _SESSION_LOCK:
+        sess = SESSIONS.get(sid)
+        turns = list(sess.turns) if sess else []
+
+    if not turns:
+        return jsonify({"error": "no conversation history for this session",
+                        "session_id": sid,
+                        "detail": "Ask at least one question on /converse first."}), 404
+
+    officer = claims.get("sub") or claims.get("kgid") or "unknown"
+    fd, path = tempfile.mkstemp(suffix=".pdf", prefix="kaveri-")
+    os.close(fd)
+    try:
+        export_conversation(path, turns, officer, claims["role"])
+        with open(path, "rb") as fh:
+            blob = fh.read()
+    finally:
+        try:
+            os.remove(path)                      # nothing of the officer's session is retained
+        except OSError:
+            pass
+
+    safe = "".join(c for c in sid if c.isalnum() or c in "-_")[:40] or "session"
+    return Response(blob, mimetype="application/pdf", headers={
+        "Content-Disposition": 'attachment; filename="KAVERI-conversation-%s.pdf"' % safe,
+        "Content-Length": str(len(blob)),
+        "X-Turns-Exported": str(len(turns)),
     })
 
 

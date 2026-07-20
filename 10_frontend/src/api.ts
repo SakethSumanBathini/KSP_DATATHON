@@ -44,6 +44,17 @@ export async function getToken(forceRefresh = false): Promise<string> {
   return currentToken as string;
 }
 
+/**
+ * A token-signed absolute URL, for things the browser must fetch itself rather than through
+ * apiFetch — a PDF download is one: we want the browser's own save dialog, not a blob in memory.
+ */
+export async function signedUrl(endpoint: string): Promise<string> {
+  const t = await getToken();
+  const base = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
+  const sep = base.includes('?') ? '&' : '?';
+  return `${base}${sep}token=${encodeURIComponent(t)}`;
+}
+
 export async function apiFetch(endpoint: string, options: RequestInit = {}): Promise<any> {
   let token = await getToken();
 
